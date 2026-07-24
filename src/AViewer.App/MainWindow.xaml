@@ -4,59 +4,84 @@
         xmlns:models="clr-namespace:AViewer.Core.Models;assembly=AViewer.Core"
         Title="AViewer Modern"
         AutomationProperties.Name="AViewer accessibility inspector"
-        Width="1280" Height="820" MinWidth="900" MinHeight="600" PreviewKeyDown="MainWindow_PreviewKeyDown">
-  <DockPanel Margin="16">
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
-      <Button x:Name="InspectPointerButton" Content="_Inspect pointer" Click="InspectPointer_Click" ToolTip="Continuously inspect elements under the pointer outside AViewer"/>
-      <Button x:Name="InspectFocusButton" Content="Inspect _focus" Click="InspectFocus_Click" ToolTip="Continuously inspect keyboard focus outside AViewer"/>
-      <Button Content="_Copy JSON" Click="CopyJson_Click"/>
-      <Button Content="_Save JSON…" Click="SaveJson_Click"/>
-      <Button Content="Choose _properties…" Click="ChooseProperties_Click" ToolTip="Choose which accessibility properties are displayed"/>
-      <CheckBox x:Name="ShowRelationshipsCheckBox"
-                Margin="16,0,0,0"
-                VerticalAlignment="Center"
-                Content="Show _relationships"
-                ToolTip="Draw labelled connectors to related UIA elements"
-                Checked="ShowRelationships_Changed"
-                Unchecked="ShowRelationships_Changed"/>
-      <Button x:Name="RecordFocusOrderButton"
-              Margin="16,0,0,0"
-              Content="_Record focus order"
-              Click="RecordFocusOrder_Click"
-              ToolTip="Record Tab and Shift+Tab focus stops outside AViewer"/>
-      <Button Content="C_lear focus path"
-              Click="ClearFocusPath_Click"
-              ToolTip="Clear the recorded focus-order visualization"/>
-      <CheckBox x:Name="IncludeArrowNavigationCheckBox"
-                Margin="12,0,0,0"
-                VerticalAlignment="Center"
-                Content="Include _arrow navigation"
-                ToolTip="Also record focus changes caused by arrow keys inside composite widgets"
-                Checked="IncludeArrowNavigation_Changed"
-                Unchecked="IncludeArrowNavigation_Changed"/>
-      <CheckBox x:Name="AlwaysOnTopCheckBox"
-                Margin="16,0,0,0"
-                VerticalAlignment="Center"
-                Content="Always on _top"
-                Checked="AlwaysOnTop_Changed"
-                Unchecked="AlwaysOnTop_Changed"/>
-      <TextBlock Margin="12,8,0,0" Text="Depth:"/>
-      <ComboBox x:Name="DepthBox" Width="64" SelectedIndex="2" Margin="6,0,0,0">
-        <ComboBoxItem Content="0"/><ComboBoxItem Content="1"/><ComboBoxItem Content="2"/><ComboBoxItem Content="3"/><ComboBoxItem Content="4"/>
-      </ComboBox>
-    </StackPanel>
+        Width="1080" Height="680" MinWidth="760" MinHeight="480"
+        PreviewKeyDown="MainWindow_PreviewKeyDown">
+  <DockPanel Margin="8">
+    <Border DockPanel.Dock="Top"
+            Padding="0,0,0,2"
+            Margin="0,0,0,4"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+            BorderThickness="0,0,0,1">
+      <WrapPanel Orientation="Horizontal">
+        <Button x:Name="InspectPointerButton"
+                Content="_Inspect pointer"
+                Click="InspectPointer_Click"
+                ToolTip="Continuously inspect elements under the pointer outside AViewer"/>
+        <Button x:Name="InspectFocusButton"
+                Content="Inspect _focus"
+                Click="InspectFocus_Click"
+                ToolTip="Continuously inspect keyboard focus outside AViewer"/>
+        <Button Content="_Copy JSON" Click="CopyJson_Click"/>
+        <Button Content="_Save JSON…" Click="SaveJson_Click"/>
+        <Button Content="_Properties…"
+                Click="ChooseProperties_Click"
+                ToolTip="Choose which accessibility properties are displayed"/>
 
-    <StatusBar DockPanel.Dock="Bottom" Margin="0,10,0,0">
-      <StatusBarItem><TextBlock x:Name="StatusText" Text="Ready"/></StatusBarItem>
+        <Separator Width="1" Margin="3,2,8,6"/>
+
+        <CheckBox x:Name="ShowRelationshipsCheckBox"
+                  Content="_Relationships"
+                  ToolTip="Draw labelled connectors to related accessibility elements"
+                  Checked="ShowRelationships_Changed"
+                  Unchecked="ShowRelationships_Changed"/>
+        <Button x:Name="RecordFocusOrderButton"
+                Content="_Record focus order"
+                Click="RecordFocusOrder_Click"
+                ToolTip="Record Tab and Shift+Tab focus stops outside AViewer"/>
+        <Button Content="C_lear path"
+                Click="ClearFocusPath_Click"
+                ToolTip="Clear the recorded focus-order visualization"/>
+        <CheckBox x:Name="IncludeArrowNavigationCheckBox"
+                  Content="_Arrow navigation"
+                  ToolTip="Also record focus changes caused by arrow keys inside composite widgets"
+                  Checked="IncludeArrowNavigation_Changed"
+                  Unchecked="IncludeArrowNavigation_Changed"/>
+        <CheckBox x:Name="AlwaysOnTopCheckBox"
+                  Content="Always on _top"
+                  Checked="AlwaysOnTop_Changed"
+                  Unchecked="AlwaysOnTop_Changed"/>
+
+        <TextBlock Margin="2,5,4,0" Text="Depth:" VerticalAlignment="Top"/>
+        <ComboBox x:Name="DepthBox" Width="54" SelectedIndex="2">
+          <ComboBoxItem Content="0"/>
+          <ComboBoxItem Content="1"/>
+          <ComboBoxItem Content="2"/>
+          <ComboBoxItem Content="3"/>
+          <ComboBoxItem Content="4"/>
+        </ComboBox>
+      </WrapPanel>
+    </Border>
+
+    <StatusBar DockPanel.Dock="Bottom" Margin="0,4,0,0" Padding="2,0" MinHeight="24">
+      <StatusBarItem Padding="2,0">
+        <TextBlock x:Name="StatusText" Text="Ready"/>
+      </StatusBarItem>
     </StatusBar>
 
     <Grid>
-      <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="5"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions>
-      <GroupBox x:Name="TreeGroupBox" Header="UIA accessibility tree" Grid.Column="0" Padding="8">
-        <TreeView x:Name="NodeTree" SelectedItemChanged="NodeTree_SelectedItemChanged">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="5*" MinWidth="250"/>
+        <ColumnDefinition Width="4"/>
+        <ColumnDefinition Width="7*" MinWidth="330"/>
+      </Grid.ColumnDefinitions>
+
+      <GroupBox x:Name="TreeGroupBox" Header="UIA accessibility tree" Grid.Column="0">
+        <TreeView x:Name="NodeTree"
+                  Padding="2"
+                  SelectedItemChanged="NodeTree_SelectedItemChanged">
           <TreeView.Resources>
             <HierarchicalDataTemplate DataType="{x:Type models:AccessibilityNode}" ItemsSource="{Binding Children}">
-              <StackPanel Orientation="Horizontal">
+              <StackPanel Orientation="Horizontal" Margin="0,1">
                 <TextBlock FontWeight="SemiBold" Text="{Binding ControlType}"/>
                 <TextBlock Text=" — "/>
                 <TextBlock Text="{Binding Name}"/>
@@ -65,13 +90,18 @@
           </TreeView.Resources>
         </TreeView>
       </GroupBox>
-      <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
-      <GroupBox Header="Properties" Grid.Column="2" Padding="8">
+
+      <GridSplitter Grid.Column="1"
+                    Width="4"
+                    Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                    HorizontalAlignment="Stretch"/>
+
+      <GroupBox Header="Properties" Grid.Column="2">
         <GroupBox.Resources>
           <Style x:Key="WrappingCellText" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="Padding" Value="4,2"/>
           </Style>
           <Style x:Key="PropertyDataGrid" TargetType="DataGrid">
             <Setter Property="AutoGenerateColumns" Value="False"/>
@@ -79,21 +109,26 @@
             <Setter Property="CanUserAddRows" Value="False"/>
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
           </Style>
         </GroupBox.Resources>
-        <TabControl x:Name="ApiTabControl" SelectionChanged="ApiTabControl_SelectionChanged">
+
+        <TabControl x:Name="ApiTabControl"
+                    Padding="0"
+                    SelectionChanged="ApiTabControl_SelectionChanged">
           <TabItem Header="UIA">
             <DataGrid x:Name="UiaPropertyGrid" Style="{StaticResource PropertyDataGrid}">
               <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Section" Width="135">
+                <DataGridTemplateColumn Header="Section" Width="110">
                   <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
                       <TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Group}"/>
                     </DataTemplate>
                   </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Property" Width="180">
+                <DataGridTemplateColumn Header="Property" Width="145">
                   <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
                       <TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Name}"/>
@@ -110,10 +145,11 @@
               </DataGrid.Columns>
             </DataGrid>
           </TabItem>
+
           <TabItem Header="MSAA">
             <DataGrid x:Name="MsaaPropertyGrid" Style="{StaticResource PropertyDataGrid}">
               <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Property" Width="180">
+                <DataGridTemplateColumn Header="Property" Width="145">
                   <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
                       <TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Name}"/>
@@ -130,10 +166,11 @@
               </DataGrid.Columns>
             </DataGrid>
           </TabItem>
+
           <TabItem Header="IAccessible2">
             <DataGrid x:Name="Ia2PropertyGrid" Style="{StaticResource PropertyDataGrid}">
               <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Property" Width="180">
+                <DataGridTemplateColumn Header="Property" Width="145">
                   <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
                       <TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Name}"/>
