@@ -1,0 +1,21 @@
+<Window x:Class="AViewer.App.FocusIndicatorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="1"
+        Height="1"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        Focusable="False"
+        IsHitTestVisible="False">
+  <Rectangle x:Name="IndicatorRectangle" Stroke="#FF107C10"
+             StrokeThickness="4"
+             StrokeDashArray="2,2"
+             RadiusX="2"
+             RadiusY="2"
+             Fill="Transparent"/>
+</Window>
