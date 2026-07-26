@@ -1,4 +1,4 @@
-# AViewer Modern
+# AViewer Moderno
 
 A modern Windows accessibility API inspection tool inspired by the original aViewer.
 
