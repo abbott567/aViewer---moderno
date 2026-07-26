@@ -47,6 +47,60 @@ public sealed class Uia3Inspector : IAccessibilityInspector
             legacyTrees.Ia2Root);
     }
 
+    public AccessibilityInspectionSnapshot InspectParent(AccessibilityNode node, string api, int maxDepth = 3)
+    {
+        var x = (int)Math.Round(node.BoundingX + (node.BoundingWidth / 2));
+        var y = (int)Math.Round(node.BoundingY + (node.BoundingHeight / 2));
+        var depth = Math.Max(0, maxDepth);
+
+        AutomationElement? pointElement = null;
+        AutomationElement? uiaParent = null;
+        try
+        {
+            pointElement = _automation.FromPoint(new Point(x, y));
+            var matching = FindMatchingAncestor(pointElement, node);
+            uiaParent = matching?.Parent;
+        }
+        catch
+        {
+            uiaParent = null;
+        }
+
+        var legacyTrees = _ia2Inspector.InspectParentTreesPoint(x, y, depth);
+        return new AccessibilityInspectionSnapshot(
+            uiaParent is null ? null : Map(uiaParent, 0, depth),
+            legacyTrees.MsaaRoot,
+            legacyTrees.Ia2Root);
+    }
+
+    private static AutomationElement? FindMatchingAncestor(AutomationElement? element, AccessibilityNode node)
+    {
+        var current = element;
+        for (var index = 0; current is not null && index < 20; index++)
+        {
+            try
+            {
+                var p = current.Properties;
+                var rect = Read(() => p.BoundingRectangle.ValueOrDefault, Rectangle.Empty);
+                var name = Text(() => p.Name.ValueOrDefault);
+                if (Math.Abs(rect.X - node.BoundingX) < 2 &&
+                    Math.Abs(rect.Y - node.BoundingY) < 2 &&
+                    Math.Abs(rect.Width - node.BoundingWidth) < 2 &&
+                    Math.Abs(rect.Height - node.BoundingHeight) < 2 &&
+                    (string.IsNullOrWhiteSpace(node.Name) || string.Equals(name, node.Name, StringComparison.Ordinal)))
+                {
+                    return current;
+                }
+                current = current.Parent;
+            }
+            catch
+            {
+                return element;
+            }
+        }
+        return element;
+    }
+
     private AccessibilityNode Map(AutomationElement element, int depth, int maxDepth)
     {
         var p = element.Properties;

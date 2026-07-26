@@ -1,0 +1,237 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>AViewer Modern</value>
+  </data>
+  <data name="AppAutomationName" xml:space="preserve">
+    <value>AViewer accessibility inspector</value>
+  </data>
+  <data name="MenuFile" xml:space="preserve">
+    <value>_File</value>
+  </data>
+  <data name="MenuInspect" xml:space="preserve">
+    <value>_Inspect</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>_View</value>
+  </data>
+  <data name="MenuNavigate" xml:space="preserve">
+    <value>_Navigate</value>
+  </data>
+  <data name="MenuHelp" xml:space="preserve">
+    <value>_Help</value>
+  </data>
+  <data name="MenuCopyHtml" xml:space="preserve">
+    <value>Copy selected element as _HTML</value>
+  </data>
+  <data name="MenuCopyHtmlSubtree" xml:space="preserve">
+    <value>Copy loaded HTML _subtree</value>
+  </data>
+  <data name="MenuCopyJson" xml:space="preserve">
+    <value>_Copy accessibility tree as JSON</value>
+  </data>
+  <data name="MenuSaveJson" xml:space="preserve">
+    <value>_Save accessibility tree as JSON…</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>E_xit</value>
+  </data>
+  <data name="MenuInspectPointer" xml:space="preserve">
+    <value>Inspect by _pointer</value>
+  </data>
+  <data name="MenuInspectFocus" xml:space="preserve">
+    <value>Inspect keyboard _focus</value>
+  </data>
+  <data name="MenuRecordFocusOrder" xml:space="preserve">
+    <value>_Record focus order</value>
+  </data>
+  <data name="MenuClearFocusPath" xml:space="preserve">
+    <value>C_lear focus path</value>
+  </data>
+  <data name="MenuIncludeArrowNavigation" xml:space="preserve">
+    <value>Include _arrow-key navigation</value>
+  </data>
+  <data name="MenuShowRelationships" xml:space="preserve">
+    <value>Show _relationships</value>
+  </data>
+  <data name="MenuAlwaysOnTop" xml:space="preserve">
+    <value>Always on _top</value>
+  </data>
+  <data name="MenuChooseProperties" xml:space="preserve">
+    <value>Choose displayed _properties…</value>
+  </data>
+  <data name="MenuLanguage" xml:space="preserve">
+    <value>_Language</value>
+  </data>
+  <data name="LanguageSystem" xml:space="preserve">
+    <value>System language</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguageFrench" xml:space="preserve">
+    <value>Français</value>
+  </data>
+  <data name="MenuUpOneLevel" xml:space="preserve">
+    <value>_Up one level</value>
+  </data>
+  <data name="PointerInspect" xml:space="preserve">
+    <value>Pointer inspect</value>
+  </data>
+  <data name="FocusInspect" xml:space="preserve">
+    <value>Focus inspect</value>
+  </data>
+  <data name="FocusOrder" xml:space="preserve">
+    <value>Focus _order</value>
+  </data>
+  <data name="TreeDepth" xml:space="preserve">
+    <value>Tree depth</value>
+  </data>
+  <data name="AccessibilityTree" xml:space="preserve">
+    <value>Accessibility tree</value>
+  </data>
+  <data name="Properties" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="Section" xml:space="preserve">
+    <value>Section</value>
+  </data>
+  <data name="Property" xml:space="preserve">
+    <value>Property</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="PointerInspectionName" xml:space="preserve">
+    <value>Pointer inspection</value>
+  </data>
+  <data name="FocusInspectionName" xml:space="preserve">
+    <value>Keyboard focus inspection</value>
+  </data>
+  <data name="PointerInspectionTooltip" xml:space="preserve">
+    <value>Continuously inspect the element under the pointer (F7)</value>
+  </data>
+  <data name="FocusInspectionTooltip" xml:space="preserve">
+    <value>Continuously inspect keyboard focus (F8)</value>
+  </data>
+  <data name="FocusOrderTooltip" xml:space="preserve">
+    <value>Record Tab and arrow-key focus navigation (F9)</value>
+  </data>
+  <data name="UpOneLevelTooltip" xml:space="preserve">
+    <value>Re-root the active accessibility tree at the selected element's parent</value>
+  </data>
+  <data name="TreeDepthAutomationName" xml:space="preserve">
+    <value>Accessibility tree depth</value>
+  </data>
+  <data name="InspectionStopped" xml:space="preserve">
+    <value>Inspection stopped</value>
+  </data>
+  <data name="PointerInspectionActive" xml:space="preserve">
+    <value>Pointer inspection active. Move the pointer over another application; press Escape to stop.</value>
+  </data>
+  <data name="FocusInspectionActive" xml:space="preserve">
+    <value>Focus inspection active. Move keyboard focus to another application; press Escape to stop.</value>
+  </data>
+  <data name="InspectionFailed" xml:space="preserve">
+    <value>Inspection failed: {0}</value>
+  </data>
+  <data name="NoElementFound" xml:space="preserve">
+    <value>No {0} element found ({1})</value>
+  </data>
+  <data name="ElementSummary" xml:space="preserve">
+    <value>{0} · {1}: {2} — {3}</value>
+  </data>
+  <data name="ApiAccessibilityTree" xml:space="preserve">
+    <value>{0} accessibility tree</value>
+  </data>
+  <data name="ShowingTree" xml:space="preserve">
+    <value>Showing {0}</value>
+  </data>
+  <data name="PointerSource" xml:space="preserve">
+    <value>Pointer</value>
+  </data>
+  <data name="KeyboardFocusSource" xml:space="preserve">
+    <value>Keyboard focus</value>
+  </data>
+  <data name="SelectTreeElementFirst" xml:space="preserve">
+    <value>Select an accessibility-tree element first</value>
+  </data>
+  <data name="NoParentAvailable" xml:space="preserve">
+    <value>No {0} parent was available</value>
+  </data>
+  <data name="MoveUpFailed" xml:space="preserve">
+    <value>Could not move up the accessibility tree: {0}</value>
+  </data>
+  <data name="HtmlCopied" xml:space="preserve">
+    <value>HTML representation of the selected element copied</value>
+  </data>
+  <data name="HtmlSubtreeCopied" xml:space="preserve">
+    <value>HTML representation of the selected element and loaded subtree copied</value>
+  </data>
+  <data name="JsonCopied" xml:space="preserve">
+    <value>{0} JSON copied</value>
+  </data>
+  <data name="JsonFilter" xml:space="preserve">
+    <value>JSON files (*.json)|*.json</value>
+  </data>
+  <data name="SavedFile" xml:space="preserve">
+    <value>Saved {0}</value>
+  </data>
+  <data name="ChoosePropertiesTitle" xml:space="preserve">
+    <value>Choose displayed properties</value>
+  </data>
+  <data name="ChoosePropertiesDescription" xml:space="preserve">
+    <value>Select the MSAA, IAccessible2 and UI Automation properties to display. New properties discovered later are shown by default.</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="SelectNone" xml:space="preserve">
+    <value>Select none</value>
+  </data>
+  <data name="FilterPropertiesTooltip" xml:space="preserve">
+    <value>Filter the list by API or property name</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="HelpDocumentation" xml:space="preserve">
+    <value>Documentation</value>
+  </data>
+  <data name="HelpProjectWebsite" xml:space="preserve">
+    <value>Project website</value>
+  </data>
+  <data name="HelpReportIssue" xml:space="preserve">
+    <value>Report an issue</value>
+  </data>
+  <data name="HelpNoLinksConfigured" xml:space="preserve">
+    <value>No help links configured</value>
+  </data>
+  <data name="HelpInvalidLink" xml:space="preserve">
+    <value>The configured help link is invalid or uses an unsupported protocol.</value>
+  </data>
+  <data name="HelpOpenFailed" xml:space="preserve">
+    <value>The link could not be opened: {0}</value>
+  </data>
+</root>

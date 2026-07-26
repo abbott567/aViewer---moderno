@@ -8,6 +8,24 @@ internal sealed class Ia2Inspector
 {
     private static readonly object ChildSelf = 0;
 
+    private static readonly string[] Ia2RelationshipTypes =
+    [
+        "labelledBy",
+        "labelFor",
+        "describedBy",
+        "descriptionFor",
+        "controllerFor",
+        "controlledBy",
+        "flowsTo",
+        "flowsFrom",
+        "details",
+        "errorMessage",
+        "memberOf",
+        "popupFor",
+        "rowHeader",
+        "columnHeader"
+    ];
+
     public Ia2InspectionResult InspectPoint(int x, int y)
     {
         try
@@ -47,7 +65,7 @@ internal sealed class Ia2Inspector
             {
                 properties.Add(new("IA2", "Acquisition", acquisition));
                 properties.AddRange(ReadIa2(ia2Pointer, msaaRole, Read(() => msaa.get_accName(ChildSelf))));
-                var relationships = ReadIa2Relationships(ia2Pointer, properties);
+                var relationships = ReadAllIa2Relationships(ia2Pointer, properties);
                 ReadIa2TableProperties(ia2Pointer, properties, relationships);
                 return new Ia2InspectionResult(properties, relationships);
             }
@@ -72,6 +90,54 @@ internal sealed class Ia2Inspector
         }
     }
 
+
+    public (AccessibilityNode? MsaaRoot, AccessibilityNode? Ia2Root) InspectParentTreesPoint(
+        int x,
+        int y,
+        int maxDepth)
+    {
+        try
+        {
+            var hr = Ia2Interop.AccessibleObjectFromPoint(
+                new Ia2Interop.NativePoint(x, y),
+                out var rawAccessible,
+                out var childId);
+
+            if (hr < 0 || rawAccessible is not Accessibility.IAccessible accessible)
+            {
+                return (null, null);
+            }
+
+            var target = ResolveChild(accessible, childId);
+            if (target is Accessibility.IAccessible childAccessible)
+            {
+                accessible = childAccessible;
+            }
+
+            Accessibility.IAccessible? parent;
+            try
+            {
+                parent = accessible.accParent as Accessibility.IAccessible;
+            }
+            catch
+            {
+                parent = null;
+            }
+            if (parent is null)
+            {
+                return (null, null);
+            }
+
+            var depth = Math.Max(0, maxDepth);
+            return (
+                MapAccessibleTree(parent, ChildSelf, 0, depth, includeIa2: false),
+                MapAccessibleTree(parent, ChildSelf, 0, depth, includeIa2: true));
+        }
+        catch
+        {
+            return (null, null);
+        }
+    }
 
     public (AccessibilityNode? MsaaRoot, AccessibilityNode? Ia2Root) InspectTreesPoint(
         int x,
@@ -148,7 +214,7 @@ internal sealed class Ia2Inspector
                 if (TryAcquireIa2(accessible, out ia2Pointer, out _)
                     && ia2Pointer != IntPtr.Zero)
                 {
-                    node.Relationships.AddRange(ReadIa2Relationships(ia2Pointer, node.Properties));
+                    node.Relationships.AddRange(ReadAllIa2Relationships(ia2Pointer, node.Properties));
                     ReadIa2TableProperties(ia2Pointer, node.Properties, node.Relationships);
                 }
             }
@@ -286,6 +352,149 @@ internal sealed class Ia2Inspector
 
     private static Ia2InspectionResult Result(IReadOnlyList<AccessibilityProperty> properties) =>
         new(properties, Array.Empty<AccessibilityRelationship>());
+
+
+    private static List<AccessibilityRelationship> ReadAllIa2Relationships(
+        IntPtr ia2,
+        ICollection<AccessibilityProperty> properties)
+    {
+        var relationships = ReadIa2Relationships(ia2, properties);
+        var directTargets = ReadIa2_2RelationshipTargets(ia2, properties);
+
+        foreach (var relationship in directTargets)
+        {
+            var duplicate = relationships.Any(existing =>
+                string.Equals(existing.Type, relationship.Type, StringComparison.OrdinalIgnoreCase) &&
+                SameRelationshipTarget(existing, relationship));
+            if (!duplicate)
+            {
+                relationships.Add(relationship);
+            }
+        }
+
+        return relationships;
+    }
+
+    private static List<AccessibilityRelationship> ReadIa2_2RelationshipTargets(
+        IntPtr ia2,
+        ICollection<AccessibilityProperty> properties)
+    {
+        var relationships = new List<AccessibilityRelationship>();
+        IntPtr ia2_2 = IntPtr.Zero;
+        var iid = Ia2Interop.IidIAccessible2_2;
+
+        try
+        {
+            var queryHr = Marshal.QueryInterface(ia2, ref iid, out ia2_2);
+            if (queryHr < 0 || ia2_2 == IntPtr.Zero)
+            {
+                return relationships;
+            }
+
+            var relationTargetsCall =
+                Ia2Interop.GetVtableDelegate<Ia2Interop.RelationTargetsOfTypeDelegate>(
+                    ia2_2,
+                    Ia2Interop.Ia2_2RelationTargetsOfTypeSlot);
+
+            foreach (var relationType in Ia2RelationshipTypes)
+            {
+                IntPtr targetArray = IntPtr.Zero;
+                var count = 0;
+                try
+                {
+                    var hr = relationTargetsCall(ia2_2, relationType, 0, out targetArray, out count);
+                    if (hr < 0 || targetArray == IntPtr.Zero || count <= 0)
+                    {
+                        continue;
+                    }
+
+                    var descriptions = new List<string>();
+                    for (var index = 0; index < count; index++)
+                    {
+                        var target = Marshal.ReadIntPtr(targetArray, index * IntPtr.Size);
+                        if (target == IntPtr.Zero)
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var mapped = MapIa2Target(
+                                relationType,
+                                target,
+                                $"IA2_2 relationTargetsOfType({relationType})");
+                            if (mapped is null)
+                            {
+                                continue;
+                            }
+
+                            if (!relationships.Any(existing =>
+                                string.Equals(existing.Type, mapped.Type, StringComparison.OrdinalIgnoreCase) &&
+                                SameRelationshipTarget(existing, mapped)))
+                            {
+                                relationships.Add(mapped);
+                                descriptions.Add(FormatRelationshipTarget(mapped));
+                            }
+                        }
+                        finally
+                        {
+                            Marshal.Release(target);
+                        }
+                    }
+
+                    if (descriptions.Count > 0)
+                    {
+                        properties.Add(new(
+                            "IA2 Relationships",
+                            FriendlyRelationName(relationType),
+                            string.Join("; ", descriptions)));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    properties.Add(new(
+                        "IA2 Relationships",
+                        FriendlyRelationName(relationType),
+                        $"Unavailable ({ex.Message})"));
+                }
+                finally
+                {
+                    if (targetArray != IntPtr.Zero)
+                    {
+                        Marshal.FreeCoTaskMem(targetArray);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            if (ia2_2 != IntPtr.Zero)
+            {
+                Marshal.Release(ia2_2);
+            }
+        }
+
+        return relationships;
+    }
+
+    private static bool SameRelationshipTarget(
+        AccessibilityRelationship first,
+        AccessibilityRelationship second)
+    {
+        if (!string.IsNullOrWhiteSpace(first.TargetId) &&
+            !string.IsNullOrWhiteSpace(second.TargetId) &&
+            string.Equals(first.TargetId, second.TargetId, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        const double tolerance = 2;
+        return Math.Abs(first.TargetX - second.TargetX) <= tolerance &&
+               Math.Abs(first.TargetY - second.TargetY) <= tolerance &&
+               Math.Abs(first.TargetWidth - second.TargetWidth) <= tolerance &&
+               Math.Abs(first.TargetHeight - second.TargetHeight) <= tolerance &&
+               string.Equals(first.TargetName, second.TargetName, StringComparison.Ordinal);
+    }
 
     private static List<AccessibilityRelationship> ReadIa2Relationships(
         IntPtr ia2,
@@ -621,9 +830,8 @@ internal sealed class Ia2Inspector
         IntPtr accessiblePointer = IntPtr.Zero;
         try
         {
-            var iid = Ia2Interop.IidIAccessible;
-            var hr = Marshal.QueryInterface(unknown, ref iid, out accessiblePointer);
-            if (hr < 0 || accessiblePointer == IntPtr.Zero)
+            if (!TryAcquireAccessibleFromIa2Target(unknown, out accessiblePointer) ||
+                accessiblePointer == IntPtr.Zero)
             {
                 return null;
             }
@@ -674,6 +882,50 @@ internal sealed class Ia2Inspector
             if (accessiblePointer != IntPtr.Zero)
             {
                 Marshal.Release(accessiblePointer);
+            }
+        }
+    }
+
+    private static bool TryAcquireAccessibleFromIa2Target(
+        IntPtr unknown,
+        out IntPtr accessiblePointer)
+    {
+        accessiblePointer = IntPtr.Zero;
+
+        var accessibleIid = Ia2Interop.IidIAccessible;
+        var directHr = Marshal.QueryInterface(unknown, ref accessibleIid, out accessiblePointer);
+        if (directHr >= 0 && accessiblePointer != IntPtr.Zero)
+        {
+            return true;
+        }
+
+        IntPtr serviceProvider = IntPtr.Zero;
+        try
+        {
+            var serviceProviderIid = Ia2Interop.IidIServiceProvider;
+            var serviceHr = Marshal.QueryInterface(unknown, ref serviceProviderIid, out serviceProvider);
+            if (serviceHr < 0 || serviceProvider == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            var queryService = Ia2Interop.GetVtableDelegate<Ia2Interop.QueryServiceDelegate>(
+                serviceProvider,
+                3);
+            var service = Ia2Interop.IidIAccessible;
+            accessibleIid = Ia2Interop.IidIAccessible;
+            var queryHr = queryService(
+                serviceProvider,
+                ref service,
+                ref accessibleIid,
+                out accessiblePointer);
+            return queryHr >= 0 && accessiblePointer != IntPtr.Zero;
+        }
+        finally
+        {
+            if (serviceProvider != IntPtr.Zero)
+            {
+                Marshal.Release(serviceProvider);
             }
         }
     }

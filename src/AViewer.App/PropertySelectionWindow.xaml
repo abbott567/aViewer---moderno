@@ -1,33 +1,35 @@
 <Window x:Class="AViewer.App.PropertySelectionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Choose displayed properties"
+        xmlns:local="clr-namespace:AViewer.App"
+        Title="{local:Loc Key=ChoosePropertiesTitle}"
         Width="620"
         Height="680"
         MinWidth="480"
         MinHeight="420"
         WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False">
+        ShowInTaskbar="False"
+        FlowDirection="{Binding FlowDirection, Source={x:Static local:LocalizationManager.Instance}}">
   <DockPanel Margin="16">
     <TextBlock DockPanel.Dock="Top"
                Margin="0,0,0,12"
                TextWrapping="Wrap"
-               Text="Select the MSAA, IAccessible2 and UI Automation properties to display. New properties discovered later are shown by default."/>
+               Text="{local:Loc Key=ChoosePropertiesDescription}"/>
 
     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
-      <Button Content="Select all" Click="SelectAll_Click"/>
-      <Button Content="Select none" Click="SelectNone_Click"/>
+      <Button Content="{local:Loc Key=SelectAll}" Click="SelectAll_Click"/>
+      <Button Content="{local:Loc Key=SelectNone}" Click="SelectNone_Click"/>
       <TextBox x:Name="SearchBox"
                Width="260"
                Margin="16,0,0,0"
                VerticalContentAlignment="Center"
-               ToolTip="Filter the list by API or property name"
+               ToolTip="{local:Loc Key=FilterPropertiesTooltip}"
                TextChanged="SearchBox_TextChanged"/>
     </StackPanel>
 
     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-      <Button Width="88" IsDefault="True" Content="Apply" Click="Apply_Click"/>
-      <Button Width="88" IsCancel="True" Content="Cancel"/>
+      <Button Width="88" IsDefault="True" Content="{local:Loc Key=Apply}" Click="Apply_Click"/>
+      <Button Width="88" IsCancel="True" Content="{local:Loc Key=Cancel}"/>
     </StackPanel>
 
     <DataGrid x:Name="ChoiceGrid"
@@ -38,7 +40,7 @@
               GridLinesVisibility="Horizontal"
               SelectionMode="Extended">
       <DataGrid.Columns>
-        <DataGridTemplateColumn Header="Show" Width="70">
+        <DataGridTemplateColumn Header="{local:Loc Key=Show}" Width="70">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate>
               <CheckBox HorizontalAlignment="Center"
@@ -48,7 +50,7 @@
           </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>
         <DataGridTextColumn Header="API" Binding="{Binding Group}" IsReadOnly="True" Width="120"/>
-        <DataGridTextColumn Header="Property" Binding="{Binding Name}" IsReadOnly="True" Width="*"/>
+        <DataGridTextColumn Header="{local:Loc Key=Property}" Binding="{Binding Name}" IsReadOnly="True" Width="*"/>
       </DataGrid.Columns>
     </DataGrid>
   </DockPanel>

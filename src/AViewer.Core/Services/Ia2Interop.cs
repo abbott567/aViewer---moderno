@@ -7,6 +7,7 @@ internal static class Ia2Interop
 {
     internal static readonly Guid IidIAccessible = new("618736E0-3C3D-11CF-810C-00AA00389B71");
     internal static readonly Guid IidIAccessible2 = new("E89F726E-C4F4-4C19-BB19-B647D7FA8478");
+    internal static readonly Guid IidIAccessible2_2 = new("6C9430E9-299D-4E6F-BD01-A82A1E88D3FF");
     internal static readonly Guid IidIServiceProvider = new("6D5140C1-7436-11CE-8034-00AA006009FA");
     internal static readonly Guid IidIAccessibleRelation = new("7CDF86EE-C3DA-496A-BDA4-281B336E1FDC");
     internal static readonly Guid IidIAccessibleTable2 = new("6167F295-06F0-4CDD-A1FA-02E25153D869");
@@ -26,6 +27,10 @@ internal static class Ia2Interop
     internal const int Ia2IndexInParentSlot = 43;
     internal const int Ia2LocaleSlot = 44;
     internal const int Ia2AttributesSlot = 45;
+
+    // IAccessible2_2 extends IAccessible2. Its methods follow the final
+    // IAccessible2 method (attributes at slot 45).
+    internal const int Ia2_2RelationTargetsOfTypeSlot = 48;
 
     [StructLayout(LayoutKind.Sequential)]
     internal readonly struct NativePoint(int x, int y)
@@ -92,6 +97,14 @@ internal static class Ia2Interop
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     internal delegate int PointerArrayOutDelegate(IntPtr self, out IntPtr values, out int count);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    internal delegate int RelationTargetsOfTypeDelegate(
+        IntPtr self,
+        [MarshalAs(UnmanagedType.BStr)] string relationType,
+        int maxTargets,
+        out IntPtr targets,
+        out int count);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     internal delegate int BoolOutDelegate(IntPtr self, [MarshalAs(UnmanagedType.U1)] out bool value);

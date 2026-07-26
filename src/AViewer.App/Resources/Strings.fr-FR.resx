@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>AViewer Modern</value>
+  </data>
+  <data name="AppAutomationName" xml:space="preserve">
+    <value>Inspecteur d’accessibilité AViewer</value>
+  </data>
+  <data name="MenuFile" xml:space="preserve">
+    <value>_Fichier</value>
+  </data>
+  <data name="MenuInspect" xml:space="preserve">
+    <value>_Inspecter</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>_Affichage</value>
+  </data>
+  <data name="MenuNavigate" xml:space="preserve">
+    <value>_Navigation</value>
+  </data>
+  <data name="MenuHelp" xml:space="preserve">
+    <value>_Aide</value>
+  </data>
+  <data name="MenuCopyHtml" xml:space="preserve">
+    <value>Copier l’élément sélectionné en _HTML</value>
+  </data>
+  <data name="MenuCopyHtmlSubtree" xml:space="preserve">
+    <value>Copier le _sous-arbre HTML chargé</value>
+  </data>
+  <data name="MenuCopyJson" xml:space="preserve">
+    <value>_Copier l’arbre d’accessibilité en JSON</value>
+  </data>
+  <data name="MenuSaveJson" xml:space="preserve">
+    <value>_Enregistrer l’arbre d’accessibilité en JSON…</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>_Quitter</value>
+  </data>
+  <data name="MenuInspectPointer" xml:space="preserve">
+    <value>Inspecter avec le _pointeur</value>
+  </data>
+  <data name="MenuInspectFocus" xml:space="preserve">
+    <value>Inspecter le _focus clavier</value>
+  </data>
+  <data name="MenuRecordFocusOrder" xml:space="preserve">
+    <value>_Enregistrer l’ordre de focus</value>
+  </data>
+  <data name="MenuClearFocusPath" xml:space="preserve">
+    <value>_Effacer le parcours de focus</value>
+  </data>
+  <data name="MenuIncludeArrowNavigation" xml:space="preserve">
+    <value>Inclure la navigation par les _flèches</value>
+  </data>
+  <data name="MenuShowRelationships" xml:space="preserve">
+    <value>Afficher les _relations</value>
+  </data>
+  <data name="MenuAlwaysOnTop" xml:space="preserve">
+    <value>Toujours au _premier plan</value>
+  </data>
+  <data name="MenuChooseProperties" xml:space="preserve">
+    <value>Choisir les _propriétés affichées…</value>
+  </data>
+  <data name="MenuLanguage" xml:space="preserve">
+    <value>_Langue</value>
+  </data>
+  <data name="LanguageSystem" xml:space="preserve">
+    <value>Langue du système</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguageFrench" xml:space="preserve">
+    <value>Français</value>
+  </data>
+  <data name="MenuUpOneLevel" xml:space="preserve">
+    <value>_Monter d’un niveau</value>
+  </data>
+  <data name="PointerInspect" xml:space="preserve">
+    <value>Inspection pointeur</value>
+  </data>
+  <data name="FocusInspect" xml:space="preserve">
+    <value>Inspection du focus</value>
+  </data>
+  <data name="FocusOrder" xml:space="preserve">
+    <value>Ordre du _focus</value>
+  </data>
+  <data name="TreeDepth" xml:space="preserve">
+    <value>Profondeur de l’arbre</value>
+  </data>
+  <data name="AccessibilityTree" xml:space="preserve">
+    <value>Arbre d’accessibilité</value>
+  </data>
+  <data name="Properties" xml:space="preserve">
+    <value>Propriétés</value>
+  </data>
+  <data name="Section" xml:space="preserve">
+    <value>Section</value>
+  </data>
+  <data name="Property" xml:space="preserve">
+    <value>Propriété</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Valeur</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Prêt</value>
+  </data>
+  <data name="ChoosePropertiesTitle" xml:space="preserve">
+    <value>Choisir les propriétés affichées</value>
+  </data>
+  <data name="ChoosePropertiesDescription" xml:space="preserve">
+    <value>Sélectionnez les propriétés MSAA, IAccessible2 et UI Automation à afficher. Les nouvelles propriétés découvertes seront affichées par défaut.</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Tout sélectionner</value>
+  </data>
+  <data name="SelectNone" xml:space="preserve">
+    <value>Tout désélectionner</value>
+  </data>
+  <data name="FilterPropertiesTooltip" xml:space="preserve">
+    <value>Filtrer la liste par API ou nom de propriété</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Appliquer</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>Afficher</value>
+  </data>
+  <data name="HelpDocumentation" xml:space="preserve">
+    <value>Documentation</value>
+  </data>
+  <data name="HelpProjectWebsite" xml:space="preserve">
+    <value>Site du projet</value>
+  </data>
+  <data name="HelpReportIssue" xml:space="preserve">
+    <value>Signaler un problème</value>
+  </data>
+  <data name="HelpNoLinksConfigured" xml:space="preserve">
+    <value>Aucun lien d’aide configuré</value>
+  </data>
+  <data name="HelpInvalidLink" xml:space="preserve">
+    <value>Le lien d’aide configuré est invalide ou utilise un protocole non pris en charge.</value>
+  </data>
+  <data name="HelpOpenFailed" xml:space="preserve">
+    <value>Impossible d’ouvrir le lien : {0}</value>
+  </data>
+</root>

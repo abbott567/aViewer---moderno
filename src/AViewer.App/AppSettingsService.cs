@@ -63,6 +63,21 @@ public sealed class AppSettingsService
         }
     }
 
+    public string? UiCulture
+    {
+        get => _settings.UiCulture;
+        set
+        {
+            if (string.Equals(_settings.UiCulture, value, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _settings.UiCulture = value;
+            Save();
+        }
+    }
+
     private void Load()
     {
         try
@@ -118,5 +133,6 @@ public sealed class AppSettingsService
         public bool AlwaysOnTop { get; set; }
         public bool ShowRelationships { get; set; }
         public bool IncludeArrowNavigation { get; set; } = true;
+        public string? UiCulture { get; set; }
     }
 }

@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        LocalizationManager.Instance.SetCulture(_appSettings.UiCulture);
         InitializeComponent();
 
         _inspectionTimer = new DispatcherTimer(DispatcherPriority.Background)
@@ -59,6 +62,8 @@ public partial class MainWindow : Window
         _accessibilityPreferences.PreferencesChanged += AccessibilityPreferencesChanged;
         ApplyAccessibilityPreferences();
         ApplyActiveApi();
+        UpdateLanguageMenu();
+        PopulateHelpMenu();
     }
 
 
@@ -92,6 +97,11 @@ public partial class MainWindow : Window
         _ => "UIA"
     };
 
+    private static string L(string key) => LocalizationManager.Instance.Get(key);
+
+    private static string LF(string key, params object?[] arguments) =>
+        LocalizationManager.Instance.Format(key, arguments);
+
     private void InspectPointer_Click(object sender, RoutedEventArgs e)
     {
         SetInspectionMode(
@@ -115,29 +125,38 @@ public partial class MainWindow : Window
         _lastElementId = null;
         _lastElementRefreshUtc = DateTime.MinValue;
 
-        InspectPointerButton.Content = mode == InspectionMode.Pointer
-            ? "Stop _pointer inspection"
-            : "_Inspect pointer";
-        InspectPointerButton.IsEnabled = mode != InspectionMode.Focus;
+        var pointerActive = mode == InspectionMode.Pointer;
+        var focusActive = mode == InspectionMode.Focus;
 
-        InspectFocusButton.Content = mode == InspectionMode.Focus
-            ? "Stop _focus inspection"
-            : "Inspect _focus";
-        InspectFocusButton.IsEnabled = mode != InspectionMode.Pointer;
+        InspectPointerButton.IsChecked = pointerActive;
+        PointerToolbarButton.IsChecked = pointerActive;
+        InspectFocusButton.IsChecked = focusActive;
+        FocusToolbarButton.IsChecked = focusActive;
+
+        AutomationProperties.SetHelpText(
+            PointerToolbarButton,
+            pointerActive
+                ? "Pointer inspection is on. Activate to turn it off."
+                : "Pointer inspection is off. Activate to turn it on.");
+        AutomationProperties.SetHelpText(
+            FocusToolbarButton,
+            focusActive
+                ? "Keyboard focus inspection is on. Activate to turn it off."
+                : "Keyboard focus inspection is off. Activate to turn it on.");
 
         if (mode == InspectionMode.None)
         {
             _inspectionTimer.Stop();
             _inspectionRing.HideRing();
             _relationshipOverlay.HideOverlay();
-            StatusText.Text = _activeRoot is null ? "Ready" : "Inspection stopped";
+            StatusText.Text = _activeRoot is null ? L("Ready") : L("InspectionStopped");
             return;
         }
 
         _inspectionTimer.Start();
         StatusText.Text = mode == InspectionMode.Pointer
-            ? "Pointer inspection active. Move the pointer over another application; press Escape to stop."
-            : "Focus inspection active. Move keyboard focus to another application; press Escape to stop.";
+            ? L("PointerInspectionActive")
+            : L("FocusInspectionActive");
     }
 
     private async void InspectionTimer_Tick(object? sender, EventArgs e)
@@ -176,14 +195,14 @@ public partial class MainWindow : Window
 
             _lastElementId = targetRoot.Id;
             _lastElementRefreshUtc = now;
-            ShowResult(result, mode == InspectionMode.Pointer ? "Pointer" : "Keyboard focus");
+            ShowResult(result, mode == InspectionMode.Pointer ? L("PointerSource") : L("KeyboardFocusSource"));
         }
         catch (Exception ex)
         {
             if (generation == _inspectionGeneration)
             {
                 SetInspectionMode(InspectionMode.None);
-                StatusText.Text = $"Inspection failed: {ex.Message}";
+                StatusText.Text = LF("InspectionFailed", ex.Message);
             }
         }
         finally
@@ -225,8 +244,8 @@ public partial class MainWindow : Window
 
         RefreshRelationshipOverlay();
         StatusText.Text = _activeRoot is null
-            ? $"No {ActiveApi} element found ({source})"
-            : $"{source} · {ActiveApi}: {_activeRoot.ControlType} — {_activeRoot.Name}";
+            ? LF("NoElementFound", ActiveApi, source)
+            : LF("ElementSummary", source, ActiveApi, _activeRoot.ControlType, _activeRoot.Name);
     }
 
     private void ApplyActiveApi()
@@ -234,7 +253,7 @@ public partial class MainWindow : Window
         _activeRoot = _snapshot?.RootFor(ActiveApi);
         _selectedNode = _activeRoot;
         NodeTree.ItemsSource = _activeRoot is null ? null : new[] { _activeRoot };
-        TreeGroupBox.Header = $"{(ActiveApi == "IA2" ? "IAccessible2" : ActiveApi)} accessibility tree";
+        TreeHeading.Text = LF("ApiAccessibilityTree", ActiveApi == "IA2" ? "IAccessible2" : ActiveApi);
         RefreshDisplayedProperties();
         RefreshRelationshipOverlay();
 
@@ -256,7 +275,7 @@ public partial class MainWindow : Window
         }
 
         ApplyActiveApi();
-        StatusText.Text = $"Showing {TreeGroupBox.Header}";
+        StatusText.Text = LF("ShowingTree", TreeHeading.Text);
     }
 
     private void NodeTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -279,6 +298,34 @@ public partial class MainWindow : Window
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.F7)
+        {
+            InspectPointer_Click(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.F8)
+        {
+            InspectFocus_Click(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.F9)
+        {
+            RecordFocusOrder_Click(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Up && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+        {
+            UpOneLevel_Click(sender, e);
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key != Key.Escape)
         {
             return;
@@ -305,9 +352,10 @@ public partial class MainWindow : Window
     {
         _recordingFocusOrder = enabled;
         _focusCaptureGeneration++;
-        RecordFocusOrderButton.Content = enabled
+        RecordFocusOrderButton.Header = enabled
             ? "Stop _recording focus order"
             : "_Record focus order";
+        FocusOrderToolbarButton.Content = enabled ? "Stop focus _order" : "Focus _order";
 
         if (enabled)
         {
@@ -321,7 +369,8 @@ public partial class MainWindow : Window
             catch (Exception ex)
             {
                 _recordingFocusOrder = false;
-                RecordFocusOrderButton.Content = "_Record focus order";
+                RecordFocusOrderButton.Header = "_Record focus order";
+                FocusOrderToolbarButton.Content = "Focus _order";
                 StatusText.Text = $"Could not start focus-order recording: {ex.Message}";
             }
         }
@@ -434,12 +483,167 @@ public partial class MainWindow : Window
     {
         if (ShowRelationshipsCheckBox.IsChecked == true && _selectedNode is not null)
         {
-            _relationshipOverlay.ShowRelationships(_selectedNode);
+            _relationshipOverlay.ShowRelationships(BuildRelationshipVisualizationNode(_selectedNode));
         }
         else
         {
             _relationshipOverlay.HideOverlay();
         }
+    }
+
+    private AccessibilityNode BuildRelationshipVisualizationNode(AccessibilityNode selected)
+    {
+        var merged = new List<AccessibilityRelationship>();
+        AddDistinctRelationships(merged, selected.Relationships);
+
+        if (_snapshot is not null)
+        {
+            foreach (var root in new[] { _snapshot.UiaRoot, _snapshot.MsaaRoot, _snapshot.Ia2Root })
+            {
+                if (root is null)
+                {
+                    continue;
+                }
+
+                var matching = FindBestMatchingNode(root, selected);
+                if (matching is not null)
+                {
+                    AddDistinctRelationships(merged, matching.Relationships);
+                }
+            }
+        }
+
+        return new AccessibilityNode
+        {
+            Api = selected.Api,
+            Id = selected.Id,
+            Name = selected.Name,
+            ControlType = selected.ControlType,
+            Framework = selected.Framework,
+            AutomationId = selected.AutomationId,
+            ClassName = selected.ClassName,
+            ProcessName = selected.ProcessName,
+            ProcessId = selected.ProcessId,
+            BoundingRectangle = selected.BoundingRectangle,
+            BoundingX = selected.BoundingX,
+            BoundingY = selected.BoundingY,
+            BoundingWidth = selected.BoundingWidth,
+            BoundingHeight = selected.BoundingHeight,
+            IsEnabled = selected.IsEnabled,
+            IsKeyboardFocusable = selected.IsKeyboardFocusable,
+            HasKeyboardFocus = selected.HasKeyboardFocus,
+            Properties = selected.Properties,
+            Relationships = merged,
+            Children = selected.Children
+        };
+    }
+
+    private static AccessibilityNode? FindBestMatchingNode(AccessibilityNode root, AccessibilityNode selected)
+    {
+        AccessibilityNode? best = null;
+        var bestScore = double.MinValue;
+
+        foreach (var candidate in EnumerateNodes(root))
+        {
+            var score = RelationshipNodeMatchScore(selected, candidate);
+            if (score > bestScore)
+            {
+                best = candidate;
+                bestScore = score;
+            }
+        }
+
+        return bestScore >= 1.0 ? best : null;
+    }
+
+    private static IEnumerable<AccessibilityNode> EnumerateNodes(AccessibilityNode root)
+    {
+        yield return root;
+        foreach (var child in root.Children)
+        {
+            foreach (var descendant in EnumerateNodes(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private static double RelationshipNodeMatchScore(AccessibilityNode first, AccessibilityNode second)
+    {
+        if (first.BoundingWidth <= 0 || first.BoundingHeight <= 0 ||
+            second.BoundingWidth <= 0 || second.BoundingHeight <= 0)
+        {
+            return double.MinValue;
+        }
+
+        var firstLeft = first.BoundingX;
+        var firstTop = first.BoundingY;
+        var firstRight = firstLeft + first.BoundingWidth;
+        var firstBottom = firstTop + first.BoundingHeight;
+        var secondLeft = second.BoundingX;
+        var secondTop = second.BoundingY;
+        var secondRight = secondLeft + second.BoundingWidth;
+        var secondBottom = secondTop + second.BoundingHeight;
+
+        var intersectionWidth = Math.Max(0, Math.Min(firstRight, secondRight) - Math.Max(firstLeft, secondLeft));
+        var intersectionHeight = Math.Max(0, Math.Min(firstBottom, secondBottom) - Math.Max(firstTop, secondTop));
+        var intersectionArea = intersectionWidth * intersectionHeight;
+        var smallerArea = Math.Min(first.BoundingWidth * first.BoundingHeight, second.BoundingWidth * second.BoundingHeight);
+        var overlap = smallerArea > 0 ? intersectionArea / smallerArea : 0;
+
+        var firstCentreX = firstLeft + (first.BoundingWidth / 2);
+        var firstCentreY = firstTop + (first.BoundingHeight / 2);
+        var secondCentreX = secondLeft + (second.BoundingWidth / 2);
+        var secondCentreY = secondTop + (second.BoundingHeight / 2);
+        var centreDistance = Math.Sqrt(
+            Math.Pow(firstCentreX - secondCentreX, 2) +
+            Math.Pow(firstCentreY - secondCentreY, 2));
+        var size = Math.Max(1, Math.Min(first.BoundingWidth, first.BoundingHeight));
+        var proximity = Math.Max(0, 1 - (centreDistance / Math.Max(20, size)));
+
+        var score = (overlap * 4) + proximity;
+        if (!string.IsNullOrWhiteSpace(first.Name) &&
+            string.Equals(first.Name, second.Name, StringComparison.Ordinal))
+        {
+            score += 1;
+        }
+
+        return score;
+    }
+
+    private static void AddDistinctRelationships(
+        ICollection<AccessibilityRelationship> destination,
+        IEnumerable<AccessibilityRelationship> source)
+    {
+        foreach (var relationship in source)
+        {
+            var duplicate = destination.Any(existing =>
+                string.Equals(existing.Type, relationship.Type, StringComparison.OrdinalIgnoreCase) &&
+                SameRelationshipTarget(existing, relationship));
+
+            if (!duplicate)
+            {
+                destination.Add(relationship);
+            }
+        }
+    }
+
+    private static bool SameRelationshipTarget(
+        AccessibilityRelationship first,
+        AccessibilityRelationship second)
+    {
+        if (!string.IsNullOrWhiteSpace(first.TargetId) &&
+            !string.IsNullOrWhiteSpace(second.TargetId) &&
+            string.Equals(first.TargetId, second.TargetId, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        const double tolerance = 4;
+        return Math.Abs(first.TargetX - second.TargetX) <= tolerance &&
+               Math.Abs(first.TargetY - second.TargetY) <= tolerance &&
+               Math.Abs(first.TargetWidth - second.TargetWidth) <= tolerance &&
+               Math.Abs(first.TargetHeight - second.TargetHeight) <= tolerance;
     }
 
     private void AlwaysOnTop_Changed(object sender, RoutedEventArgs e)
@@ -533,6 +737,63 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void UpOneLevel_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedNode is null || _inspectionBusy)
+        {
+            StatusText.Text = L("SelectTreeElementFirst");
+            return;
+        }
+
+        _inspectionBusy = true;
+        try
+        {
+            var selected = _selectedNode;
+            var api = ActiveApi;
+            var result = await Task.Run(() => _inspector.InspectParent(selected, api, Depth));
+            var parent = result.RootFor(api);
+            if (parent is null)
+            {
+                StatusText.Text = LF("NoParentAvailable", api);
+                return;
+            }
+
+            ShowResult(result, "Parent level");
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = LF("MoveUpFailed", ex.Message);
+        }
+        finally
+        {
+            _inspectionBusy = false;
+        }
+    }
+
+    private void CopyHtml_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedNode is null)
+        {
+            StatusText.Text = L("SelectTreeElementFirst");
+            return;
+        }
+
+        Clipboard.SetText(HtmlExportService.SerializeElement(_selectedNode));
+        StatusText.Text = L("HtmlCopied");
+    }
+
+    private void CopyHtmlSubtree_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedNode is null)
+        {
+            StatusText.Text = L("SelectTreeElementFirst");
+            return;
+        }
+
+        Clipboard.SetText(HtmlExportService.SerializeSubtree(_selectedNode));
+        StatusText.Text = L("HtmlSubtreeCopied");
+    }
+
     private void CopyJson_Click(object sender, RoutedEventArgs e)
     {
         if (_activeRoot is null)
@@ -541,7 +802,7 @@ public partial class MainWindow : Window
         }
 
         Clipboard.SetText(JsonExportService.Serialize(_activeRoot));
-        StatusText.Text = $"{ActiveApi} JSON copied";
+        StatusText.Text = LF("JsonCopied", ActiveApi);
     }
 
     private void SaveJson_Click(object sender, RoutedEventArgs e)
@@ -553,7 +814,7 @@ public partial class MainWindow : Window
 
         var dialog = new SaveFileDialog
         {
-            Filter = "JSON files (*.json)|*.json",
+            Filter = L("JsonFilter"),
             FileName = $"{ActiveApi.ToLowerInvariant()}-accessibility-tree.json"
         };
 
@@ -563,7 +824,12 @@ public partial class MainWindow : Window
         }
 
         File.WriteAllText(dialog.FileName, JsonExportService.Serialize(_activeRoot));
-        StatusText.Text = $"Saved {dialog.FileName}";
+        StatusText.Text = LF("SavedFile", dialog.FileName);
+    }
+
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
     }
 
     protected override void OnClosed(EventArgs e)
@@ -581,4 +847,99 @@ public partial class MainWindow : Window
         _inspector.Dispose();
         base.OnClosed(e);
     }
+
+    private void Language_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem item)
+        {
+            return;
+        }
+
+        var cultureName = item.Tag?.ToString();
+        _appSettings.UiCulture = string.IsNullOrWhiteSpace(cultureName) ? null : cultureName;
+        LocalizationManager.Instance.SetCulture(_appSettings.UiCulture);
+        FlowDirection = LocalizationManager.Instance.FlowDirection;
+        ApplyActiveApi();
+        UpdateLanguageMenu();
+        PopulateHelpMenu();
+        StatusText.Text = L("Ready");
+    }
+
+    private void PopulateHelpMenu()
+    {
+        HelpMenu.Items.Clear();
+
+        var entries = HelpMenuLinkService.Load();
+        if (entries.Count == 0)
+        {
+            HelpMenu.Items.Add(new MenuItem
+            {
+                Header = L("HelpNoLinksConfigured"),
+                IsEnabled = false
+            });
+            return;
+        }
+
+        foreach (var entry in entries)
+        {
+            if (entry.IsSeparator)
+            {
+                HelpMenu.Items.Add(new Separator());
+                continue;
+            }
+
+            var label = !string.IsNullOrWhiteSpace(entry.ResourceKey)
+                ? L(entry.ResourceKey)
+                : entry.Label ?? entry.Url;
+
+            var item = new MenuItem
+            {
+                Header = label,
+                Tag = entry.Url,
+                ToolTip = entry.Url
+            };
+            item.Click += HelpLink_Click;
+            HelpMenu.Items.Add(item);
+        }
+    }
+
+    private void HelpLink_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem { Tag: string url } || !HelpMenuLinkService.IsAllowedUrl(url))
+        {
+            MessageBox.Show(
+                this,
+                L("HelpInvalidLink"),
+                L("MenuHelp"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(url)
+            {
+                UseShellExecute = true
+            });
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(
+                this,
+                LF("HelpOpenFailed", exception.Message),
+                L("MenuHelp"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void UpdateLanguageMenu()
+    {
+        var configuredCulture = _appSettings.UiCulture;
+        SystemLanguageMenuItem.IsChecked = string.IsNullOrWhiteSpace(configuredCulture);
+        EnglishLanguageMenuItem.IsChecked = string.Equals(configuredCulture, "en-US", StringComparison.OrdinalIgnoreCase);
+        FrenchLanguageMenuItem.IsChecked = string.Equals(configuredCulture, "fr-FR", StringComparison.OrdinalIgnoreCase);
+    }
+
 }

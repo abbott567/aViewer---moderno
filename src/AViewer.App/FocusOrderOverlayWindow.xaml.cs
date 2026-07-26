@@ -17,6 +17,7 @@ public partial class FocusOrderOverlayWindow : Window
     private const int SmYvirtualscreen = 77;
     private const int SmCxvirtualscreen = 78;
     private const int SmCyvirtualscreen = 79;
+    private const double ConnectorGap = 8;
 
     public FocusOrderOverlayWindow()
     {
@@ -45,20 +46,20 @@ public partial class FocusOrderOverlayWindow : Window
         {
             var step = drawable[index];
             var element = step.Element;
-            var x = element.BoundingX - virtualLeft;
-            var y = element.BoundingY - virtualTop;
+            var rect = new Rect(
+                element.BoundingX - virtualLeft,
+                element.BoundingY - virtualTop,
+                element.BoundingWidth,
+                element.BoundingHeight);
             var isCurrent = index == drawable.Length - 1;
 
-            DrawElementBox(x, y, element.BoundingWidth, element.BoundingHeight, isCurrent);
-            DrawSequenceBadge(step.Sequence, x, y);
+            DrawElementBox(rect.X, rect.Y, rect.Width, rect.Height, isCurrent);
+            DrawSequenceBadge(step.Sequence, rect);
 
-            if (index == 0)
+            if (index > 0)
             {
-                continue;
+                DrawTransition(drawable[index - 1], step, virtualLeft, virtualTop);
             }
-
-            var previous = drawable[index - 1];
-            DrawTransition(previous, step, virtualLeft, virtualTop);
         }
 
         if (!IsVisible)
@@ -82,19 +83,16 @@ public partial class FocusOrderOverlayWindow : Window
         double virtualLeft,
         double virtualTop)
     {
-        var previousElement = previous.Element;
-        var currentElement = current.Element;
-        var x1 = previousElement.BoundingX - virtualLeft + (previousElement.BoundingWidth / 2);
-        var y1 = previousElement.BoundingY - virtualTop + (previousElement.BoundingHeight / 2);
-        var x2 = currentElement.BoundingX - virtualLeft + (currentElement.BoundingWidth / 2);
-        var y2 = currentElement.BoundingY - virtualTop + (currentElement.BoundingHeight / 2);
+        var previousRect = ToRect(previous.Element, virtualLeft, virtualTop);
+        var currentRect = ToRect(current.Element, virtualLeft, virtualTop);
+        var (start, end) = GetConnectorEndpoints(previousRect, currentRect, ConnectorGap);
         var key = current.NavigationKey ?? FocusNavigationKey.Tab;
         var innerBrush = IsArrowKey(key)
             ? AccessibilityVisualPalette.CompositeNavigationBrush
             : AccessibilityVisualPalette.SequentialNavigationBrush;
 
-        DrawOutlinedArrow(x1, y1, x2, y2, innerBrush);
-        DrawLabel(KeyLabel(key), (x1 + x2) / 2, (y1 + y2) / 2, innerBrush);
+        DrawOutlinedArrow(start.X, start.Y, end.X, end.Y, innerBrush);
+        DrawLabelOutsideElements(KeyLabel(key), start, end, previousRect, currentRect, innerBrush);
     }
 
     private void DrawElementBox(
@@ -120,7 +118,7 @@ public partial class FocusOrderOverlayWindow : Window
         OverlayCanvas.Children.Add(rectangle);
     }
 
-    private void DrawSequenceBadge(int sequence, double x, double y)
+    private void DrawSequenceBadge(int sequence, Rect elementRect)
     {
         var badge = new Border
         {
@@ -141,9 +139,43 @@ public partial class FocusOrderOverlayWindow : Window
             },
             IsHitTestVisible = false
         };
-        Canvas.SetLeft(badge, x - 10);
-        Canvas.SetTop(badge, y - 12);
+
+        badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var size = badge.DesiredSize;
+        var position = FindOutsideBadgePosition(elementRect, size);
+        Canvas.SetLeft(badge, position.X);
+        Canvas.SetTop(badge, position.Y);
         OverlayCanvas.Children.Add(badge);
+    }
+
+    private Point FindOutsideBadgePosition(Rect elementRect, Size size)
+    {
+        const double gap = 5;
+        var candidates = new[]
+        {
+            new Point(elementRect.Left - size.Width - gap, elementRect.Top - size.Height - gap),
+            new Point(elementRect.Right + gap, elementRect.Top - size.Height - gap),
+            new Point(elementRect.Left - size.Width - gap, elementRect.Bottom + gap),
+            new Point(elementRect.Right + gap, elementRect.Bottom + gap),
+            new Point(elementRect.Left, elementRect.Top - size.Height - gap),
+            new Point(elementRect.Left, elementRect.Bottom + gap)
+        };
+
+        foreach (var point in candidates)
+        {
+            var rect = new Rect(point, size);
+            if (rect.Left >= 2 && rect.Top >= 2 && rect.Right <= Width - 2 && rect.Bottom <= Height - 2)
+            {
+                return point;
+            }
+        }
+
+        var fallback = new Rect(
+            elementRect.Right + gap,
+            elementRect.Top,
+            size.Width,
+            size.Height);
+        return ClampToCanvas(fallback).TopLeft;
     }
 
     private void DrawOutlinedArrow(
@@ -198,7 +230,13 @@ public partial class FocusOrderOverlayWindow : Window
         });
     }
 
-    private void DrawLabel(string text, double x, double y, Brush borderBrush)
+    private void DrawLabelOutsideElements(
+        string text,
+        Point start,
+        Point end,
+        Rect sourceRect,
+        Rect targetRect,
+        Brush borderBrush)
     {
         var label = new Border
         {
@@ -214,10 +252,119 @@ public partial class FocusOrderOverlayWindow : Window
             },
             IsHitTestVisible = false
         };
-        Canvas.SetLeft(label, x + 6);
-        Canvas.SetTop(label, y + 6);
+
+        label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var size = label.DesiredSize;
+        var position = FindLabelPlacement(start, end, size, sourceRect, targetRect);
+        Canvas.SetLeft(label, position.X);
+        Canvas.SetTop(label, position.Y);
         OverlayCanvas.Children.Add(label);
     }
+
+    private Point FindLabelPlacement(
+        Point start,
+        Point end,
+        Size labelSize,
+        Rect sourceRect,
+        Rect targetRect)
+    {
+        var dx = end.X - start.X;
+        var dy = end.Y - start.Y;
+        var length = Math.Max(1, Math.Sqrt((dx * dx) + (dy * dy)));
+        var perpendicular = new Vector(-dy / length, dx / length);
+        var fractions = new[] { 0.5, 0.38, 0.62 };
+        var offsets = new[] { 14.0, -14.0, 28.0, -28.0, 42.0, -42.0 };
+        var protectedSource = sourceRect;
+        var protectedTarget = targetRect;
+        protectedSource.Inflate(6, 6);
+        protectedTarget.Inflate(6, 6);
+
+        foreach (var fraction in fractions)
+        {
+            var anchor = new Point(start.X + (dx * fraction), start.Y + (dy * fraction));
+            foreach (var offset in offsets)
+            {
+                var candidate = new Rect(
+                    anchor.X + (perpendicular.X * offset) - (labelSize.Width / 2),
+                    anchor.Y + (perpendicular.Y * offset) - (labelSize.Height / 2),
+                    labelSize.Width,
+                    labelSize.Height);
+                candidate = ClampToCanvas(candidate);
+
+                if (!candidate.IntersectsWith(protectedSource) &&
+                    !candidate.IntersectsWith(protectedTarget))
+                {
+                    return candidate.TopLeft;
+                }
+            }
+        }
+
+        return ClampToCanvas(new Rect(
+            ((start.X + end.X) / 2) + 12,
+            ((start.Y + end.Y) / 2) + 12,
+            labelSize.Width,
+            labelSize.Height)).TopLeft;
+    }
+
+    private Rect ClampToCanvas(Rect rect)
+    {
+        var maxX = Math.Max(0, Width - rect.Width - 2);
+        var maxY = Math.Max(0, Height - rect.Height - 2);
+        return new Rect(
+            Math.Clamp(rect.X, 2, maxX),
+            Math.Clamp(rect.Y, 2, maxY),
+            rect.Width,
+            rect.Height);
+    }
+
+    private static (Point Start, Point End) GetConnectorEndpoints(
+        Rect sourceRect,
+        Rect targetRect,
+        double gap)
+    {
+        var sourceCentre = Centre(sourceRect);
+        var targetCentre = Centre(targetRect);
+        var vector = targetCentre - sourceCentre;
+        var length = vector.Length;
+
+        if (length < 0.001)
+        {
+            return (
+                new Point(sourceRect.Right + gap, sourceCentre.Y),
+                new Point(targetRect.Right + gap + 1, targetCentre.Y));
+        }
+
+        vector.Normalize();
+        var sourceBoundary = BoundaryPoint(sourceRect, targetCentre);
+        var targetBoundary = BoundaryPoint(targetRect, sourceCentre);
+        return (sourceBoundary + (vector * gap), targetBoundary - (vector * gap));
+    }
+
+    private static Point BoundaryPoint(Rect rect, Point toward)
+    {
+        var centre = Centre(rect);
+        var dx = toward.X - centre.X;
+        var dy = toward.Y - centre.Y;
+        var halfWidth = Math.Max(0.5, rect.Width / 2);
+        var halfHeight = Math.Max(0.5, rect.Height / 2);
+        var scaleX = Math.Abs(dx) < 0.001 ? double.PositiveInfinity : halfWidth / Math.Abs(dx);
+        var scaleY = Math.Abs(dy) < 0.001 ? double.PositiveInfinity : halfHeight / Math.Abs(dy);
+        var scale = Math.Min(scaleX, scaleY);
+        return new Point(centre.X + (dx * scale), centre.Y + (dy * scale));
+    }
+
+    private static Point Centre(Rect rect) =>
+        new(rect.X + (rect.Width / 2), rect.Y + (rect.Height / 2));
+
+    private static Rect ToRect(
+        AViewer.Core.Models.AccessibilityNode element,
+        double virtualLeft,
+        double virtualTop) =>
+        new(
+            element.BoundingX - virtualLeft,
+            element.BoundingY - virtualTop,
+            element.BoundingWidth,
+            element.BoundingHeight);
 
     private static bool IsDrawable(AViewer.Core.Models.AccessibilityNode element) =>
         element.BoundingWidth > 0 &&

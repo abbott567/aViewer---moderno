@@ -1,0 +1,17 @@
+[
+  {
+    "resourceKey": "HelpDocumentation",
+    "url": "https://github.com/ThePacielloGroup/aviewer"
+  },
+  {
+    "resourceKey": "HelpProjectWebsite",
+    "url": "https://github.com/ThePacielloGroup/aviewer"
+  },
+  {
+    "isSeparator": true
+  },
+  {
+    "resourceKey": "HelpReportIssue",
+    "url": "https://github.com/ThePacielloGroup/aviewer/issues"
+  }
+]
