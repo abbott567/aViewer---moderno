@@ -1,6 +1,6 @@
 # AViewer Moderno
 
-A modern Windows accessibility API inspection tool inspired by the original aViewer.
+A free, open source, modern Windows accessibility API inspection tool inspired by the original aViewer.
 
 [downloadable exe.zip 63mb](https://drive.google.com/file/d/1zdkIiBLFvcUADYZ9U7r3ZALEmnqVKsGL/view?usp=drive_link)
 
