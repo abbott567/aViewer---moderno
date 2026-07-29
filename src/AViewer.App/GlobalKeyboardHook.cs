@@ -29,20 +29,33 @@ public sealed class GlobalKeyboardHook : IDisposable
     private const int VkRight = 0x27;
     private const int VkDown = 0x28;
 
-    private readonly HookProcedure _procedure;
-    private nint _handle;
+    private readonly HookProcedure _hookProcedure;
+    private nint _hookHandle;
     private bool _disposed;
 
-    public GlobalKeyboardHook() => _procedure = HookCallback;
+    public GlobalKeyboardHook()
+    {
+        _hookProcedure = HookCallback;
+    }
 
     public event EventHandler<FocusNavigationKeyEventArgs>? NavigationKeyReleased;
 
+    public bool IsRunning => _hookHandle != nint.Zero;
+
     public void Start()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_handle != nint.Zero) return;
-        _handle = SetWindowsHookEx(WhKeyboardLl, _procedure, GetModuleHandle(null), 0);
-        if (_handle == nint.Zero)
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(nameof(GlobalKeyboardHook));
+        }
+        if (_hookHandle != nint.Zero)
+        {
+            return;
+        }
+
+        var moduleHandle = GetModuleHandle(null);
+        _hookHandle = SetWindowsHookEx(WhKeyboardLl, _hookProcedure, moduleHandle, 0);
+        if (_hookHandle == nint.Zero)
         {
             throw new InvalidOperationException(
                 $"Could not install the keyboard hook. Win32 error: {Marshal.GetLastWin32Error()}.");
@@ -51,9 +64,13 @@ public sealed class GlobalKeyboardHook : IDisposable
 
     public void Stop()
     {
-        if (_handle == nint.Zero) return;
-        _ = UnhookWindowsHookEx(_handle);
-        _handle = nint.Zero;
+        if (_hookHandle == nint.Zero)
+        {
+            return;
+        }
+
+        _ = UnhookWindowsHookEx(_hookHandle);
+        _hookHandle = nint.Zero;
     }
 
     private nint HookCallback(int code, nint wParam, nint lParam)
@@ -61,30 +78,38 @@ public sealed class GlobalKeyboardHook : IDisposable
         if (code >= 0 && (wParam == WmKeyUp || wParam == WmSysKeyUp))
         {
             var data = Marshal.PtrToStructure<KeyboardHookData>(lParam);
-            var key = Map(data.VirtualKeyCode);
-            if (key is not null)
+            var navigationKey = MapNavigationKey(data.VirtualKeyCode);
+            if (navigationKey is not null)
             {
-                NavigationKeyReleased?.Invoke(this, new FocusNavigationKeyEventArgs(key.Value));
+                NavigationKeyReleased?.Invoke(
+                    this,
+                    new FocusNavigationKeyEventArgs(navigationKey.Value));
             }
         }
-        return CallNextHookEx(_handle, code, wParam, lParam);
+
+        return CallNextHookEx(_hookHandle, code, wParam, lParam);
     }
 
-    private static FocusNavigationKey? Map(uint key) => key switch
-    {
-        VkTab => (GetAsyncKeyState(VkShift) & 0x8000) != 0
-            ? FocusNavigationKey.ShiftTab
-            : FocusNavigationKey.Tab,
-        VkLeft => FocusNavigationKey.ArrowLeft,
-        VkRight => FocusNavigationKey.ArrowRight,
-        VkUp => FocusNavigationKey.ArrowUp,
-        VkDown => FocusNavigationKey.ArrowDown,
-        _ => null
-    };
+    private static FocusNavigationKey? MapNavigationKey(uint virtualKeyCode) =>
+        virtualKeyCode switch
+        {
+            VkTab => (GetAsyncKeyState(VkShift) & 0x8000) != 0
+                ? FocusNavigationKey.ShiftTab
+                : FocusNavigationKey.Tab,
+            VkLeft => FocusNavigationKey.ArrowLeft,
+            VkRight => FocusNavigationKey.ArrowRight,
+            VkUp => FocusNavigationKey.ArrowUp,
+            VkDown => FocusNavigationKey.ArrowDown,
+            _ => null
+        };
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         Stop();
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -93,28 +118,36 @@ public sealed class GlobalKeyboardHook : IDisposable
     private delegate nint HookProcedure(int code, nint wParam, nint lParam);
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct KeyboardHookData
+    private readonly struct KeyboardHookData
     {
-        public uint VirtualKeyCode;
-        public uint ScanCode;
-        public uint Flags;
-        public uint Time;
-        public nuint ExtraInfo;
+        public readonly uint VirtualKeyCode;
+        public readonly uint ScanCode;
+        public readonly uint Flags;
+        public readonly uint Time;
+        public readonly nint ExtraInfo;
     }
 
     [DllImport("user32.dll", SetLastError = true)]
-    private static extern nint SetWindowsHookEx(int idHook, HookProcedure procedure, nint module, uint threadId);
+    private static extern nint SetWindowsHookEx(
+        int hookId,
+        HookProcedure hookProcedure,
+        nint moduleHandle,
+        uint threadId);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool UnhookWindowsHookEx(nint hook);
+    private static extern bool UnhookWindowsHookEx(nint hookHandle);
 
     [DllImport("user32.dll")]
-    private static extern nint CallNextHookEx(nint hook, int code, nint wParam, nint lParam);
+    private static extern nint CallNextHookEx(
+        nint hookHandle,
+        int code,
+        nint wParam,
+        nint lParam);
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKeyCode);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern nint GetModuleHandle(string? moduleName);
-
-    [DllImport("user32.dll")]
-    private static extern short GetAsyncKeyState(int virtualKey);
 }

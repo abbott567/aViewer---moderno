@@ -2,83 +2,12 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:AViewer.Core.Models;assembly=AViewer.Core"
-        Title="AViewer Moderno"
-        AutomationProperties.Name="AViewer Moderno accessibility inspector"
-        Width="1080" Height="700" MinWidth="760" MinHeight="480"
+        xmlns:local="clr-namespace:AViewer.App"
+        Title="{local:Loc Key=AppTitle}"
+        AutomationProperties.Name="{local:Loc Key=AppAutomationName}"
+        FlowDirection="{Binding FlowDirection, Source={x:Static local:LocalizationManager.Instance}}"
+        Width="1080" Height="680" MinWidth="760" MinHeight="480"
         PreviewKeyDown="MainWindow_PreviewKeyDown">
-  <Window.Resources>
-    <HierarchicalDataTemplate DataType="{x:Type models:AccessibilityNode}" ItemsSource="{Binding Children}">
-      <StackPanel Orientation="Horizontal">
-        <TextBlock Text="{Binding ControlType}" FontWeight="SemiBold"/>
-        <TextBlock Text="  "/>
-        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
-      </StackPanel>
-    </HierarchicalDataTemplate>
-    <DataTemplate x:Key="WrappedCellTemplate">
-      <TextBlock Text="{Binding Value}" TextWrapping="Wrap" Margin="5,3"/>
-    </DataTemplate>
-
-    <Style x:Key="InspectSwitchStyle" TargetType="{x:Type ToggleButton}">
-      <Setter Property="Margin" Value="0,0,12,0"/>
-      <Setter Property="Padding" Value="0"/>
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-      <Setter Property="HorizontalContentAlignment" Value="Left"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="{x:Type ToggleButton}">
-            <Border x:Name="FocusBorder"
-                    Padding="2"
-                    Background="Transparent"
-                    BorderBrush="Transparent"
-                    BorderThickness="1">
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Grid Width="36" Height="20" Margin="0,0,6,0">
-                  <Border x:Name="SwitchTrack"
-                          CornerRadius="10"
-                          Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                          BorderBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
-                          BorderThickness="1"/>
-                  <Ellipse x:Name="SwitchThumb"
-                           Width="14" Height="14" Margin="3"
-                           HorizontalAlignment="Left"
-                           Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
-                           Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
-                           StrokeThickness="1"/>
-                </Grid>
-                <ContentPresenter ContentSource="Content"
-                                  VerticalAlignment="Center"
-                                  RecognizesAccessKey="True"/>
-              </StackPanel>
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="SwitchTrack" Property="Background"
-                        Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
-                <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
-                <Setter TargetName="SwitchThumb" Property="Fill"
-                        Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
-              </Trigger>
-              <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter TargetName="FocusBorder" Property="BorderBrush"
-                        Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
-              </Trigger>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="SwitchTrack" Property="BorderBrush"
-                        Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
-              </Trigger>
-              <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Opacity" Value="0.55"/>
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
-  </Window.Resources>
-
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
@@ -87,82 +16,88 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <Border Grid.Row="0"
-            MinHeight="28"
-            Panel.ZIndex="100"
-            Visibility="Visible"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-            BorderThickness="0,0,0,1">
-      <Menu x:Name="MainMenu"
-            MinHeight="27"
-            Visibility="Visible"
-            VerticalAlignment="Stretch"
-            Background="Transparent"
-            Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
-            AutomationProperties.Name="Application menu">
-      <MenuItem Header="_File">
-        <MenuItem Header="Copy selected element as _HTML" Click="CopyHtml_Click" InputGestureText="Ctrl+Shift+H"/>
-        <MenuItem Header="Copy loaded HTML _subtree" Click="CopyHtmlSubtree_Click"/>
+    <Menu Grid.Row="0"
+          Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}"
+          Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}">
+      <MenuItem Header="{local:Loc Key=MenuFile}">
+        <MenuItem Header="{local:Loc Key=MenuCopyHtml}"
+                  Click="CopyHtml_Click"
+                  InputGestureText="Ctrl+Shift+H"/>
+        <MenuItem Header="{local:Loc Key=MenuCopyHtmlSubtree}"
+                  Click="CopyHtmlSubtree_Click"/>
         <Separator/>
-        <MenuItem Header="_Copy accessibility tree as JSON" Click="CopyJson_Click" InputGestureText="Ctrl+C"/>
-        <MenuItem Header="_Save accessibility tree as JSON…" Click="SaveJson_Click" InputGestureText="Ctrl+S"/>
+        <MenuItem Header="{local:Loc Key=MenuCopyJson}"
+                  Click="CopyJson_Click"
+                  InputGestureText="Ctrl+C"/>
+        <MenuItem Header="{local:Loc Key=MenuSaveJson}"
+                  Click="SaveJson_Click"
+                  InputGestureText="Ctrl+S"/>
         <Separator/>
-        <MenuItem Header="E_xit" Click="Exit_Click"/>
+        <MenuItem Header="{local:Loc Key=MenuExit}" Click="Exit_Click"/>
       </MenuItem>
 
-      <MenuItem Header="_Inspect">
+      <MenuItem Header="{local:Loc Key=MenuInspect}">
         <MenuItem x:Name="InspectPointerButton"
-                  Header="Inspect by _pointer"
+                  Header="{local:Loc Key=MenuInspectPointer}"
                   IsCheckable="True"
                   StaysOpenOnClick="True"
                   Click="InspectPointer_Click"
                   InputGestureText="F7"/>
         <MenuItem x:Name="InspectFocusButton"
-                  Header="Inspect keyboard _focus"
+                  Header="{local:Loc Key=MenuInspectFocus}"
                   IsCheckable="True"
                   StaysOpenOnClick="True"
                   Click="InspectFocus_Click"
                   InputGestureText="F8"/>
         <Separator/>
         <MenuItem x:Name="RecordFocusOrderButton"
-                  Header="_Record focus order"
+                  Header="{local:Loc Key=MenuRecordFocusOrder}"
                   Click="RecordFocusOrder_Click"
                   InputGestureText="F9"/>
-        <MenuItem Header="C_lear focus path" Click="ClearFocusPath_Click"/>
+        <MenuItem Header="{local:Loc Key=MenuClearFocusPath}"
+                  Click="ClearFocusPath_Click"/>
         <MenuItem x:Name="IncludeArrowNavigationCheckBox"
-                  Header="Include _arrow-key navigation"
+                  Header="{local:Loc Key=MenuIncludeArrowNavigation}"
                   IsCheckable="True"
                   Checked="IncludeArrowNavigation_Changed"
                   Unchecked="IncludeArrowNavigation_Changed"/>
       </MenuItem>
 
-      <MenuItem Header="_View">
+      <MenuItem Header="{local:Loc Key=MenuView}">
         <MenuItem x:Name="ShowRelationshipsCheckBox"
-                  Header="Show _relationships"
+                  Header="{local:Loc Key=MenuShowRelationships}"
                   IsCheckable="True"
                   Checked="ShowRelationships_Changed"
                   Unchecked="ShowRelationships_Changed"/>
         <MenuItem x:Name="AlwaysOnTopCheckBox"
-                  Header="Always on _top"
+                  Header="{local:Loc Key=MenuAlwaysOnTop}"
                   IsCheckable="True"
                   Checked="AlwaysOnTop_Changed"
                   Unchecked="AlwaysOnTop_Changed"/>
         <Separator/>
-        <MenuItem Header="_Preferences…" Click="ChooseProperties_Click"/>
-      </MenuItem>
-
-      <MenuItem Header="_Navigate">
-        <MenuItem Header="Load complete _app or page tree" Click="LoadCompleteTree_Click" InputGestureText="Ctrl+Shift+A"/>
+        <MenuItem Header="{local:Loc Key=MenuChooseProperties}"
+                  Click="ChooseProperties_Click"/>
         <Separator/>
-        <MenuItem Header="_Up one level" Click="UpOneLevel_Click" InputGestureText="Alt+Up"/>
-        <MenuItem Header="_Expand complete tree" Click="ExpandAll_Click"/>
-        <MenuItem Header="_Collapse tree" Click="CollapseAll_Click"/>
+        <MenuItem Header="{local:Loc Key=MenuLanguage}">
+          <MenuItem x:Name="SystemLanguageMenuItem" Header="{local:Loc Key=LanguageSystem}" Tag="" IsCheckable="True" Click="Language_Click"/>
+          <MenuItem x:Name="EnglishLanguageMenuItem" Header="{local:Loc Key=LanguageEnglish}" Tag="en-US" IsCheckable="True" Click="Language_Click"/>
+          <MenuItem x:Name="FrenchLanguageMenuItem" Header="{local:Loc Key=LanguageFrench}" Tag="fr-FR" IsCheckable="True" Click="Language_Click"/>
+        </MenuItem>
       </MenuItem>
 
-      <MenuItem x:Name="HelpMenu" Header="_Help"/>
-      </Menu>
-    </Border>
+      <MenuItem Header="{local:Loc Key=MenuNavigate}">
+        <MenuItem Header="{local:Loc Key=MenuUpOneLevel}"
+                  Click="UpOneLevel_Click"
+                  InputGestureText="Alt+Up"/>
+        <MenuItem Header="{local:Loc Key=MenuCompleteTree}"
+                  Click="CompleteTree_Click"
+                  InputGestureText="Ctrl+Shift+T"/>
+      </MenuItem>
+
+      <MenuItem x:Name="HelpMenu" Header="{local:Loc Key=MenuHelp}">
+        <!-- Items are loaded from HelpMenuLinks.json at runtime. -->
+      </MenuItem>
+    </Menu>
 
     <Border Grid.Row="1"
             Padding="8,5"
@@ -172,50 +107,50 @@
       <DockPanel LastChildFill="False">
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
           <ToggleButton x:Name="PointerToolbarButton"
-                        Style="{StaticResource InspectSwitchStyle}"
-                        Content="Pointer inspect"
+                        Style="{StaticResource InspectionSwitchStyle}"
+                        Content="{local:Loc Key=PointerInspect}"
                         Click="InspectPointer_Click"
-                        AutomationProperties.Name="Pointer inspection switch"
-                        ToolTip="Continuously inspect the element under the pointer (F7)"/>
+                        AutomationProperties.Name="{local:Loc Key=PointerInspectionName}"
+                        ToolTip="{local:Loc Key=PointerInspectionTooltip}"/>
           <ToggleButton x:Name="FocusToolbarButton"
-                        Style="{StaticResource InspectSwitchStyle}"
-                        Content="Focus inspect"
+                        Style="{StaticResource InspectionSwitchStyle}"
+                        Content="{local:Loc Key=FocusInspect}"
                         Click="InspectFocus_Click"
-                        AutomationProperties.Name="Keyboard focus inspection switch"
-                        ToolTip="Continuously inspect keyboard focus (F8)"/>
+                        AutomationProperties.Name="{local:Loc Key=FocusInspectionName}"
+                        ToolTip="{local:Loc Key=FocusInspectionTooltip}"/>
           <Button x:Name="FocusOrderToolbarButton"
-                  Content="Focus _order"
+                  Content="{local:Loc Key=FocusOrder}"
                   Click="RecordFocusOrder_Click"
-                  ToolTip="Record Tab and arrow-key focus navigation (F9)"/>
+                  ToolTip="{local:Loc Key=FocusOrderTooltip}"/>
           <Separator Width="1" Margin="6,2"/>
-          <Button Content="Complete _tree"
-                  Click="LoadCompleteTree_Click"
-                  ToolTip="Load the complete accessibility tree for the selected application or web page"/>
-          <Button Content="_Up one level" Click="UpOneLevel_Click"/>
-          <Button Content="_Preferences…" Click="ChooseProperties_Click"/>
+          <Button Content="{local:Loc Key=MenuUpOneLevel}"
+                  Click="UpOneLevel_Click"
+                  ToolTip="{local:Loc Key=UpOneLevelTooltip}"/>
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-          <TextBlock Text="Tree depth" VerticalAlignment="Center" Margin="0,0,6,0"/>
-          <ComboBox x:Name="DepthBox" Width="58" SelectedIndex="2" AutomationProperties.Name="Accessibility tree depth">
+          <TextBlock Text="{local:Loc Key=TreeDepth}"
+                     VerticalAlignment="Center"
+                     Margin="0,0,6,0"/>
+          <ComboBox x:Name="DepthBox"
+                    Width="58"
+                    SelectedIndex="2"
+                    AutomationProperties.Name="{local:Loc Key=TreeDepthAutomationName}">
             <ComboBoxItem Content="0"/>
             <ComboBoxItem Content="1"/>
             <ComboBoxItem Content="2"/>
             <ComboBoxItem Content="3"/>
             <ComboBoxItem Content="4"/>
-            <ComboBoxItem Content="5"/>
-            <ComboBoxItem Content="6"/>
-            <ComboBoxItem Content="All"/>
           </ComboBox>
         </StackPanel>
       </DockPanel>
     </Border>
 
-    <Grid Grid.Row="2" Margin="8">
+    <Grid Grid.Row="2" Margin="8" MinHeight="0" ClipToBounds="True">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="2*" MinWidth="260"/>
-        <ColumnDefinition Width="6"/>
-        <ColumnDefinition Width="3*" MinWidth="340"/>
+        <ColumnDefinition Width="5*" MinWidth="250"/>
+        <ColumnDefinition Width="5"/>
+        <ColumnDefinition Width="7*" MinWidth="330"/>
       </Grid.ColumnDefinitions>
 
       <Grid Grid.Column="0">
@@ -223,52 +158,151 @@
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock x:Name="TreeHeading" Text="UIA accessibility tree" FontWeight="SemiBold" Margin="0,0,0,6"/>
-        <TreeView x:Name="NodeTree"
-                  Grid.Row="1"
-                  SelectedItemChanged="NodeTree_SelectedItemChanged"
-                  AutomationProperties.Name="Accessibility tree"/>
+        <TextBlock x:Name="TreeHeading"
+                   Text="{local:Loc Key=AccessibilityTree}"
+                   FontWeight="SemiBold"
+                   Margin="2,0,0,6"/>
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                BorderThickness="1">
+          <TreeView x:Name="NodeTree"
+                    Padding="4"
+                    SelectedItemChanged="NodeTree_SelectedItemChanged">
+            <TreeView.Resources>
+              <HierarchicalDataTemplate DataType="{x:Type models:AccessibilityNode}" ItemsSource="{Binding Children}">
+                <StackPanel Orientation="Horizontal" Margin="0,1">
+                  <TextBlock FontWeight="SemiBold" Text="{Binding ControlType}"/>
+                  <TextBlock Text=" — "/>
+                  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+              </HierarchicalDataTemplate>
+            </TreeView.Resources>
+          </TreeView>
+        </Border>
       </Grid>
 
-      <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch"/>
+      <GridSplitter Grid.Column="1"
+                    Width="5"
+                    Margin="4,0"
+                    Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                    HorizontalAlignment="Stretch"/>
 
-      <TabControl x:Name="ApiTabControl"
-                  Grid.Column="2"
-                  SelectionChanged="ApiTabControl_SelectionChanged">
-        <TabItem Header="UIA">
-          <DataGrid x:Name="UiaPropertyGrid" AutomationProperties.Name="UIA properties">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="Auto"/>
-              <DataGridTextColumn Header="Property" Binding="{Binding Name}" Width="Auto"/>
-              <DataGridTemplateColumn Header="Value" CellTemplate="{StaticResource WrappedCellTemplate}" Width="*"/>
-            </DataGrid.Columns>
-          </DataGrid>
-        </TabItem>
-        <TabItem Header="MSAA">
-          <DataGrid x:Name="MsaaPropertyGrid" AutomationProperties.Name="MSAA properties">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="Auto"/>
-              <DataGridTextColumn Header="Property" Binding="{Binding Name}" Width="Auto"/>
-              <DataGridTemplateColumn Header="Value" CellTemplate="{StaticResource WrappedCellTemplate}" Width="*"/>
-            </DataGrid.Columns>
-          </DataGrid>
-        </TabItem>
-        <TabItem Header="IAccessible2">
-          <DataGrid x:Name="Ia2PropertyGrid" AutomationProperties.Name="IAccessible2 properties">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="Auto"/>
-              <DataGridTextColumn Header="Property" Binding="{Binding Name}" Width="Auto"/>
-              <DataGridTemplateColumn Header="Value" CellTemplate="{StaticResource WrappedCellTemplate}" Width="*"/>
-            </DataGrid.Columns>
-          </DataGrid>
-        </TabItem>
-      </TabControl>
+      <Grid Grid.Column="2">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="{local:Loc Key=Properties}"
+                   FontWeight="SemiBold"
+                   Margin="2,0,0,6"/>
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                BorderThickness="1">
+          <Border.Resources>
+            <Style x:Key="WrappingCellText" TargetType="TextBlock">
+              <Setter Property="TextWrapping" Value="Wrap"/>
+              <Setter Property="VerticalAlignment" Value="Top"/>
+              <Setter Property="Padding" Value="5,3"/>
+            </Style>
+            <Style x:Key="PropertyDataGrid" TargetType="DataGrid">
+              <Setter Property="AutoGenerateColumns" Value="False"/>
+              <Setter Property="IsReadOnly" Value="True"/>
+              <Setter Property="CanUserAddRows" Value="False"/>
+              <Setter Property="HeadersVisibility" Value="Column"/>
+              <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+              <Setter Property="RowHeaderWidth" Value="0"/>
+              <Setter Property="BorderThickness" Value="0"/>
+              <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+              <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            </Style>
+          </Border.Resources>
+
+          <TabControl x:Name="ApiTabControl"
+                      Padding="0"
+                      BorderThickness="0"
+                      SelectionChanged="ApiTabControl_SelectionChanged">
+            <TabItem Header="UIA">
+              <DataGrid x:Name="UiaPropertyGrid" Style="{StaticResource PropertyDataGrid}">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Section}" Width="105">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Group}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Property}" Width="145">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Name}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Value}" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Value}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </TabItem>
+
+            <TabItem Header="MSAA">
+              <DataGrid x:Name="MsaaPropertyGrid" Style="{StaticResource PropertyDataGrid}">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Property}" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Name}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Value}" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Value}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </TabItem>
+
+            <TabItem Header="IAccessible2">
+              <DataGrid x:Name="Ia2PropertyGrid" Style="{StaticResource PropertyDataGrid}">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Property}" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Name}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="{local:Loc Key=Value}" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate><TextBlock Style="{StaticResource WrappingCellText}" Text="{Binding Value}"/></DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </TabItem>
+          </TabControl>
+        </Border>
+      </Grid>
     </Grid>
 
-    <StatusBar Grid.Row="3">
-      <StatusBarItem>
-        <TextBlock x:Name="StatusText" Text="Ready" TextWrapping="Wrap"/>
-      </StatusBarItem>
-    </StatusBar>
+    <Border Grid.Row="3"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+            BorderThickness="0,1,0,0"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Padding="6,2">
+      <Grid MinHeight="20">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" MinWidth="0"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="StatusText"
+                   Grid.Column="0"
+                   Text="{local:Loc Key=Ready}"
+                   VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis"
+                   ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+        <TextBlock Grid.Column="1"
+                   Margin="12,0,0,0"
+                   Text="UIA · MSAA · IAccessible2"
+                   VerticalAlignment="Center"
+                   TextWrapping="NoWrap"/>
+      </Grid>
+    </Border>
   </Grid>
 </Window>

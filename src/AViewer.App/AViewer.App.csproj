@@ -5,14 +5,16 @@
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>AViewer.Moderno</AssemblyName>
-    <RootNamespace>AViewer.App</RootNamespace>
+    <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\AViewer.Core\AViewer.Core.csproj" />
-    <None Update="HelpMenuLinks.json" CopyToOutputDirectory="PreserveNewest" />
-    <!-- Ignore obsolete files that may remain when a newer archive is extracted over an older checkout. -->
-    <Compile Remove="AccessibilityVisualPalette.cs" />
-    <Compile Remove="HelpMenuLink.cs" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="HelpMenuLinks.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

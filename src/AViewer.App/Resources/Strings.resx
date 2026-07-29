@@ -234,4 +234,25 @@
   <data name="HelpOpenFailed" xml:space="preserve">
     <value>The link could not be opened: {0}</value>
   </data>
+  <data name="MenuCompleteTree" xml:space="preserve">
+    <value>Complete application tree</value>
+  </data>
+  <data name="InspectExternalElementFirst" xml:space="preserve">
+    <value>Inspect an element outside AViewer before loading the complete tree.</value>
+  </data>
+  <data name="LoadingCompleteTree" xml:space="preserve">
+    <value>Loading the complete application accessibility tree…</value>
+  </data>
+  <data name="CompleteTreeUnavailable" xml:space="preserve">
+    <value>The complete application tree could not be loaded from the inspected element.</value>
+  </data>
+  <data name="CompleteTreeSource" xml:space="preserve">
+    <value>Complete application tree</value>
+  </data>
+  <data name="CompleteTreeLoaded" xml:space="preserve">
+    <value>Complete tree loaded for {0}: {1} elements.</value>
+  </data>
+  <data name="CompleteTreeFailed" xml:space="preserve">
+    <value>Could not load the complete tree: {0}</value>
+  </data>
 </root>

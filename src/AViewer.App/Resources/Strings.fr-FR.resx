@@ -159,4 +159,25 @@
   <data name="HelpOpenFailed" xml:space="preserve">
     <value>Impossible d’ouvrir le lien : {0}</value>
   </data>
+  <data name="MenuCompleteTree" xml:space="preserve">
+    <value>Arbre complet de l’application</value>
+  </data>
+  <data name="InspectExternalElementFirst" xml:space="preserve">
+    <value>Inspectez un élément hors d’AViewer avant de charger l’arbre complet.</value>
+  </data>
+  <data name="LoadingCompleteTree" xml:space="preserve">
+    <value>Chargement de l’arbre d’accessibilité complet de l’application…</value>
+  </data>
+  <data name="CompleteTreeUnavailable" xml:space="preserve">
+    <value>Impossible de charger l’arbre complet de l’application à partir de l’élément inspecté.</value>
+  </data>
+  <data name="CompleteTreeSource" xml:space="preserve">
+    <value>Arbre complet de l’application</value>
+  </data>
+  <data name="CompleteTreeLoaded" xml:space="preserve">
+    <value>Arbre complet chargé pour {0} : {1} éléments.</value>
+  </data>
+  <data name="CompleteTreeFailed" xml:space="preserve">
+    <value>Impossible de charger l’arbre complet : {0}</value>
+  </data>
 </root>

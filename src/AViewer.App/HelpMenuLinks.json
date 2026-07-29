@@ -1,25 +1,17 @@
 [
-   {
-    "label": "Help Documentation",
-    "url": "https://github.com/stevefaulkner/aViewer---moderno#aviewer-modern"
+  {
+    "resourceKey": "HelpDocumentation",
+    "url": "https://github.com/ThePacielloGroup/aviewer"
   },
   {
-    "label": "HelpProjectWebsite",
-    "url": "https://github.com/stevefaulkner/aViewer---moderno"
-  },
-  {
-    "isSeparator": true
-  },
-  {
-    "label": "HelpReportIssue",
-    "url": "https://github.com/stevefaulkner/aViewer---moderno/issues"
+    "resourceKey": "HelpProjectWebsite",
+    "url": "https://github.com/ThePacielloGroup/aviewer"
   },
   {
     "isSeparator": true
   },
   {
-    "label": "IAccessible2 specification",
-    "url": "https://accessibility.linuxfoundation.org/a11yspecs/ia2/docs/html/"
+    "resourceKey": "HelpReportIssue",
+    "url": "https://github.com/ThePacielloGroup/aviewer/issues"
   }
 ]
-

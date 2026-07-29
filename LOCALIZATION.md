@@ -1,4 +1,4 @@
-# Localising AViewer Moderno
+# Localising AViewer Modern
 
 AViewer uses standard .NET `.resx` resources. UI text is not embedded directly in the main XAML or dialog XAML.
 
