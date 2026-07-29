@@ -1,0 +1,25 @@
+[
+   {
+    "label": "Help Documentation",
+    "url": "https://github.com/stevefaulkner/aViewer---moderno#aviewer-modern"
+  },
+  {
+    "label": "Project repo",
+    "url": "https://github.com/stevefaulkner/aViewer---moderno"
+  },
+  {
+    "isSeparator": true
+  },
+  {
+    "label": "Report Issue",
+    "url": "https://github.com/stevefaulkner/aViewer---moderno/issues"
+  },
+  {
+    "isSeparator": true
+  },
+  {
+    "label": "IAccessible2 specification",
+    "url": "https://accessibility.linuxfoundation.org/a11yspecs/ia2/docs/html/"
+  }
+]
+

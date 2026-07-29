@@ -6,116 +6,49 @@ namespace AViewer.Core.Services;
 
 public static class HtmlExportService
 {
-    public static string SerializeElement(AccessibilityNode node) => SerializeNode(node, includeChildren: false, 0);
+    public static string SerializeElement(AccessibilityNode node) => Build(node, false, 0);
+    public static string SerializeSubtree(AccessibilityNode node) => Build(node, true, 0);
 
-    public static string SerializeSubtree(AccessibilityNode node) => SerializeNode(node, includeChildren: true, 0);
-
-    private static string SerializeNode(AccessibilityNode node, bool includeChildren, int depth)
+    private static string Build(AccessibilityNode node, bool includeChildren, int depth)
     {
         var indent = new string(' ', depth * 2);
-        var attributes = ReadAttributes(node);
-        var tag = ResolveTag(node, attributes);
-        var builder = new StringBuilder();
+        var tag = GuessTag(node);
+        var name = WebUtility.HtmlEncode(node.Name);
+        var role = WebUtility.HtmlEncode(node.ControlType.ToLowerInvariant());
+        var id = WebUtility.HtmlEncode(node.AutomationId);
+        var attributes = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(id)) attributes.Append($" id=\"{id}\"");
+        if (!NativeRoleMatches(tag, role)) attributes.Append($" role=\"{role}\"");
 
-        builder.Append(indent).Append('<').Append(tag);
-        AppendAttribute(builder, "id", Value(attributes, "id"));
-        AppendAttribute(builder, "class", Value(attributes, "class"));
-        AppendAttribute(builder, "role", FirstNonEmpty(Value(attributes, "xml-roles"), Property(node, "UIA", "Aria role")));
-        AppendAriaProperties(builder, Property(node, "UIA", "Aria properties"));
-        AppendAttribute(builder, "aria-label", node.Name);
-        builder.Append('>');
-
-        if (includeChildren && node.Children.Count > 0)
+        if (!includeChildren || node.Children.Count == 0)
         {
-            builder.AppendLine();
-            foreach (var child in node.Children)
-            {
-                builder.AppendLine(SerializeNode(child, true, depth + 1));
-            }
-            builder.Append(indent);
-        }
-        else if (!string.IsNullOrWhiteSpace(node.Name))
-        {
-            builder.Append(WebUtility.HtmlEncode(node.Name));
+            return $"{indent}<{tag}{attributes}>{name}</{tag}>";
         }
 
-        builder.Append("</").Append(tag).Append('>');
-        return builder.ToString();
+        var lines = new List<string> { $"{indent}<{tag}{attributes}>" };
+        if (!string.IsNullOrWhiteSpace(name)) lines.Add($"{indent}  {name}");
+        lines.AddRange(node.Children.Select(child => Build(child, true, depth + 1)));
+        lines.Add($"{indent}</{tag}>");
+        return string.Join(Environment.NewLine, lines);
     }
 
-    private static Dictionary<string, string> ReadAttributes(AccessibilityNode node)
+    private static string GuessTag(AccessibilityNode node) => node.ControlType.ToLowerInvariant() switch
     {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var raw = Property(node, "IA2", "Attributes");
-        if (string.IsNullOrWhiteSpace(raw)) return result;
+        "button" or "push button" => "button",
+        "edit" or "document" or "text" => "div",
+        "hyperlink" or "link" => "a",
+        "check box" or "checkbox" => "input",
+        "radio button" => "input",
+        "list" => "ul",
+        "list item" => "li",
+        "table" => "table",
+        "row" => "tr",
+        "cell" => "td",
+        "heading" => "h2",
+        _ => "div"
+    };
 
-        foreach (var item in raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            var separator = item.IndexOf(':');
-            if (separator <= 0) continue;
-            result[item[..separator].Trim()] = item[(separator + 1)..].Trim();
-        }
-
-        return result;
-    }
-
-    private static string ResolveTag(AccessibilityNode node, IReadOnlyDictionary<string, string> attributes)
-    {
-        var explicitTag = FirstNonEmpty(Value(attributes, "tag"), Value(attributes, "html-tag"));
-        if (!string.IsNullOrWhiteSpace(explicitTag) && explicitTag.All(character => char.IsLetterOrDigit(character) || character == '-'))
-        {
-            return explicitTag.ToLowerInvariant();
-        }
-
-        var role = node.ControlType.ToLowerInvariant();
-        return role switch
-        {
-            var value when value.Contains("heading") => "h2",
-            var value when value.Contains("button") => "button",
-            var value when value.Contains("link") => "a",
-            var value when value.Contains("check") => "input",
-            var value when value.Contains("radio") => "input",
-            var value when value.Contains("textbox") || value.Contains("edit") => "input",
-            var value when value.Contains("table") => "table",
-            var value when value.Contains("row") => "tr",
-            var value when value.Contains("column header") || value.Contains("row header") => "th",
-            var value when value.Contains("cell") => "td",
-            var value when value.Contains("list item") => "li",
-            var value when value.Contains("list") => "ul",
-            var value when value.Contains("image") => "img",
-            var value when value.Contains("paragraph") => "p",
-            _ => "div"
-        };
-    }
-
-    private static void AppendAriaProperties(StringBuilder builder, string raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw)) return;
-        foreach (var item in raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            var separator = item.IndexOf('=');
-            if (separator <= 0) continue;
-            var name = item[..separator].Trim();
-            var value = item[(separator + 1)..].Trim();
-            if (!name.StartsWith("aria-", StringComparison.OrdinalIgnoreCase)) continue;
-            AppendAttribute(builder, name.ToLowerInvariant(), value);
-        }
-    }
-
-    private static void AppendAttribute(StringBuilder builder, string name, string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return;
-        builder.Append(' ').Append(name).Append("=\"").Append(WebUtility.HtmlEncode(value)).Append('"');
-    }
-
-    private static string Property(AccessibilityNode node, string group, string name) =>
-        node.Properties.FirstOrDefault(property =>
-            property.Group.Equals(group, StringComparison.OrdinalIgnoreCase) &&
-            property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))?.Value ?? string.Empty;
-
-    private static string Value(IReadOnlyDictionary<string, string> values, string key) =>
-        values.TryGetValue(key, out var value) ? value : string.Empty;
-
-    private static string FirstNonEmpty(params string[] values) =>
-        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+    private static bool NativeRoleMatches(string tag, string role) =>
+        (tag == "button" && role.Contains("button", StringComparison.Ordinal)) ||
+        (tag == "a" && role.Contains("link", StringComparison.Ordinal));
 }

@@ -1,79 +1,52 @@
-using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Data;
+using System.Windows.Controls;
 
 namespace AViewer.App;
 
 public partial class PropertySelectionWindow : Window
 {
-    private readonly List<PropertyChoice> _choices;
-    private readonly ICollectionView _view;
+    private readonly List<PropertyChoice> _all;
+    public ObservableCollection<PropertyChoice> Choices { get; }
+    public IReadOnlyList<PropertyChoice> AllChoices => _all;
+    public bool ShowUnavailableProperties => ShowUnavailableCheckBox.IsChecked == true;
 
-    public PropertySelectionWindow(IEnumerable<PropertyChoice> choices)
+    public PropertySelectionWindow(
+        IReadOnlyList<PropertyChoice> choices,
+        bool showUnavailableProperties)
     {
         InitializeComponent();
-        _choices = choices
-            .Select(choice => new PropertyChoice
-            {
-                Group = choice.Group,
-                Name = choice.Name,
-                IsSelected = choice.IsSelected
-            })
-            .ToList();
-
-        _view = CollectionViewSource.GetDefaultView(_choices);
-        _view.Filter = MatchesSearch;
-        ChoiceGrid.ItemsSource = _view;
+        _all = choices.ToList();
+        Choices = new ObservableCollection<PropertyChoice>(_all);
+        ShowUnavailableCheckBox.IsChecked = showUnavailableProperties;
+        DataContext = this;
     }
 
-    public IReadOnlyList<PropertyChoice> Choices => _choices;
-
-    private bool MatchesSearch(object item)
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (item is not PropertyChoice choice)
+        var query = SearchBox.Text.Trim();
+        Choices.Clear();
+        foreach (var choice in _all.Where(item =>
+                     query.Length == 0 || item.Label.Contains(query, StringComparison.OrdinalIgnoreCase)))
         {
-            return false;
+            Choices.Add(choice);
         }
-
-        var search = SearchBox?.Text?.Trim();
-        if (string.IsNullOrEmpty(search))
-        {
-            return true;
-        }
-
-        return choice.Group.Contains(search, StringComparison.OrdinalIgnoreCase)
-            || choice.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-    {
-        _view.Refresh();
     }
 
     private void SelectAll_Click(object sender, RoutedEventArgs e)
     {
-        SetVisibleChoices(true);
+        foreach (var choice in _all) choice.IsSelected = true;
+        ChoiceList.Items.Refresh();
     }
 
     private void SelectNone_Click(object sender, RoutedEventArgs e)
     {
-        SetVisibleChoices(false);
+        foreach (var choice in _all) choice.IsSelected = false;
+        ChoiceList.Items.Refresh();
     }
 
-    private void SetVisibleChoices(bool selected)
+    private void Ok_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var item in _view.Cast<PropertyChoice>())
-        {
-            item.IsSelected = selected;
-        }
-
-        ChoiceGrid.Items.Refresh();
-    }
-
-    private void Apply_Click(object sender, RoutedEventArgs e)
-    {
-        ChoiceGrid.CommitEdit();
-        ChoiceGrid.CommitEdit();
         DialogResult = true;
     }
 }

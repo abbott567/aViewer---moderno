@@ -7,114 +7,56 @@ namespace AViewer.App;
 public partial class FocusRingWindow : Window
 {
     private const int GwlExStyle = -20;
-    private const int WsExTransparent = 0x00000020;
-    private const int WsExToolWindow = 0x00000080;
+    private const int WsExTransparent = 0x20;
+    private const int WsExToolWindow = 0x80;
     private const int WsExNoActivate = 0x08000000;
-    private const uint SwpNoActivate = 0x0010;
-    private const uint SwpShowWindow = 0x0040;
-    private static readonly nint HwndTopmost = new(-1);
-
-    private nint _handle;
 
     public FocusRingWindow()
     {
         InitializeComponent();
-        SourceInitialized += FocusRingWindow_SourceInitialized;
+        SourceInitialized += (_, _) =>
+        {
+            var handle = new WindowInteropHelper(this).Handle;
+            var style = GetWindowLongPtr(handle, GwlExStyle).ToInt64();
+            _ = SetWindowLongPtr(handle, GwlExStyle, new nint(style | WsExTransparent | WsExToolWindow | WsExNoActivate));
+        };
         ApplyVisualSettings();
     }
 
-    public void ApplyVisualSettings()
-    {
-        RingBorder.BorderBrush = AccessibilityVisualPalette.InspectionBrush;
-        RingBorder.BorderThickness = new Thickness(SystemParameters.HighContrast ? 5 : 4);
-    }
-
-    private void FocusRingWindow_SourceInitialized(object? sender, EventArgs e)
-    {
-        _handle = new WindowInteropHelper(this).Handle;
-        var styles = GetWindowLongPtr(_handle, GwlExStyle).ToInt64();
-        styles |= WsExTransparent | WsExToolWindow | WsExNoActivate;
-        SetWindowLongPtr(_handle, GwlExStyle, new nint(styles));
-    }
+    public void ApplyVisualSettings() => Ring.BorderBrush = AViewerOverlayPalette.CurrentFocusBrush;
 
     public void ShowAround(double x, double y, double width, double height)
     {
-        if (width <= 0 || height <= 0)
+        if (width <= 0 || height <= 0 || double.IsNaN(x) || double.IsNaN(y))
         {
             HideRing();
             return;
         }
-
-        if (!IsVisible)
-        {
-            Show();
-        }
-
-        if (_handle == nint.Zero)
-        {
-            _handle = new WindowInteropHelper(this).Handle;
-        }
-
-        const int padding = 3;
-        var left = checked((int)Math.Floor(x)) - padding;
-        var top = checked((int)Math.Floor(y)) - padding;
-        var ringWidth = Math.Max(1, checked((int)Math.Ceiling(width)) + (padding * 2));
-        var ringHeight = Math.Max(1, checked((int)Math.Ceiling(height)) + (padding * 2));
-
-        _ = SetWindowPos(
-            _handle,
-            HwndTopmost,
-            left,
-            top,
-            ringWidth,
-            ringHeight,
-            SwpNoActivate | SwpShowWindow);
+        const double inset = 3;
+        Left = x - inset;
+        Top = y - inset;
+        Width = Math.Max(1, width + (inset * 2));
+        Height = Math.Max(1, height + (inset * 2));
+        if (!IsVisible) Show();
     }
 
     public void HideRing()
     {
-        if (IsVisible)
-        {
-            Hide();
-        }
+        if (IsVisible) Hide();
     }
 
-    protected override void OnClosed(EventArgs e)
-    {
-        SourceInitialized -= FocusRingWindow_SourceInitialized;
-        base.OnClosed(e);
-    }
+    private static nint GetWindowLongPtr(nint handle, int index) =>
+        nint.Size == 8 ? GetWindowLongPtr64(handle, index) : new nint(GetWindowLong32(handle, index));
 
-    private static nint GetWindowLongPtr(nint windowHandle, int index) =>
-        nint.Size == 8
-            ? GetWindowLongPtr64(windowHandle, index)
-            : new nint(GetWindowLong32(windowHandle, index));
-
-    private static nint SetWindowLongPtr(nint windowHandle, int index, nint newValue) =>
-        nint.Size == 8
-            ? SetWindowLongPtr64(windowHandle, index, newValue)
-            : new nint(SetWindowLong32(windowHandle, index, newValue.ToInt32()));
+    private static nint SetWindowLongPtr(nint handle, int index, nint value) =>
+        nint.Size == 8 ? SetWindowLongPtr64(handle, index, value) : new nint(SetWindowLong32(handle, index, value.ToInt32()));
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-    private static extern int GetWindowLong32(nint windowHandle, int index);
-
+    private static extern int GetWindowLong32(nint handle, int index);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
-    private static extern nint GetWindowLongPtr64(nint windowHandle, int index);
-
+    private static extern nint GetWindowLongPtr64(nint handle, int index);
     [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
-    private static extern int SetWindowLong32(nint windowHandle, int index, int newValue);
-
+    private static extern int SetWindowLong32(nint handle, int index, int value);
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-    private static extern nint SetWindowLongPtr64(nint windowHandle, int index, nint newValue);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetWindowPos(
-        nint windowHandle,
-        nint insertAfter,
-        int x,
-        int y,
-        int width,
-        int height,
-        uint flags);
+    private static extern nint SetWindowLongPtr64(nint handle, int index, nint value);
 }

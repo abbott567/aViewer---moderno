@@ -59,7 +59,7 @@ namespace AViewer.App {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/AViewer.App;component/focusorderoverlaywindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/AViewer.Moderno;component/focusorderoverlaywindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\FocusOrderOverlayWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

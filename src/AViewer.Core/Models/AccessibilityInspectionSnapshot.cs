@@ -5,7 +5,7 @@ public sealed record AccessibilityInspectionSnapshot(
     AccessibilityNode? MsaaRoot,
     AccessibilityNode? Ia2Root)
 {
-    public AccessibilityNode? RootFor(string api) => api switch
+    public AccessibilityNode? RootFor(string api) => api.ToUpperInvariant() switch
     {
         "MSAA" => MsaaRoot,
         "IA2" => Ia2Root,

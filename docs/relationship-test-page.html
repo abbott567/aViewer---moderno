@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AViewer relationship test page</title>
+  <style>
+    body { font: 18px/1.5 system-ui, sans-serif; margin: 2rem; }
+    section { margin-block: 2rem; }
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid; padding: .5rem .75rem; }
+  </style>
+</head>
+<body>
+  <h1>AViewer relationship test page</h1>
+
+  <section>
+    <h2 id="name-heading">Account name</h2>
+    <p id="name-help">Use the name shown on your statement.</p>
+    <input aria-labelledby="name-heading" aria-describedby="name-help">
+  </section>
+
+  <section>
+    <h2>Table header associations</h2>
+    <table>
+      <caption>Quarterly subscriptions</caption>
+      <thead>
+        <tr>
+          <th id="product" scope="col">Product</th>
+          <th id="q1" scope="col">Q1</th>
+          <th id="q2" scope="col">Q2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th id="basic" scope="row">Basic</th>
+          <td headers="basic q1">120</td>
+          <td headers="basic q2">146</td>
+        </tr>
+        <tr>
+          <th id="pro" scope="row">Professional</th>
+          <td headers="pro q1">52</td>
+          <td headers="pro q2">71</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</body>
+</html>

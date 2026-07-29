@@ -12,5 +12,6 @@ public static class JsonExportService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static string Serialize(AccessibilityNode node) => JsonSerializer.Serialize(node, Options);
+    public static string Serialize(AccessibilityNode node) =>
+        JsonSerializer.Serialize(node, Options);
 }

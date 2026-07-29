@@ -3,45 +3,32 @@ using System.Text.Json;
 
 namespace AViewer.App;
 
-public static class HelpMenuLinkService
+internal sealed class ConfiguredHelpMenuEntry
 {
-    private const string FileName = "HelpMenuLinks.json";
+    public ConfiguredHelpMenuEntry() { }
+    public string? Label { get; init; }
+    public string? Url { get; init; }
+    public bool IsSeparator { get; init; }
+}
 
-    public static IReadOnlyList<HelpMenuLink> Load()
+internal static class HelpMenuLinkService
+{
+    public static IReadOnlyList<ConfiguredHelpMenuEntry> Load()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, FileName);
-        if (!File.Exists(path))
-        {
-            return [];
-        }
-
+        var path = Path.Combine(AppContext.BaseDirectory, "HelpMenuLinks.json");
         try
         {
-            var json = File.ReadAllText(path);
-            return JsonSerializer.Deserialize<List<HelpMenuLink>>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true
-            }) ?? [];
+            return File.Exists(path)
+                ? JsonSerializer.Deserialize<List<ConfiguredHelpMenuEntry>>(File.ReadAllText(path), new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? []
+                : [];
         }
-        catch (JsonException)
-        {
-            return [];
-        }
-        catch (IOException)
-        {
-            return [];
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return [];
-        }
+        catch { return []; }
     }
 
-    public static bool IsAllowedUrl(string? value)
-    {
-        return Uri.TryCreate(value, UriKind.Absolute, out var uri)
-            && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
-    }
+    public static bool IsAllowedUrl(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
 }

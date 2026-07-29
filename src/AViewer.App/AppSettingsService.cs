@@ -3,136 +3,65 @@ using System.Text.Json;
 
 namespace AViewer.App;
 
-public sealed class AppSettingsService
+internal sealed class AppSettingsService
 {
-    private readonly string _settingsPath;
-    private AppSettings _settings = new();
-
-    public AppSettingsService()
-    {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AViewerModern");
-        _settingsPath = Path.Combine(directory, "app-settings.json");
-        Load();
-    }
+    private static readonly string DirectoryPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AViewerModern");
+    private static readonly string FilePath = Path.Combine(DirectoryPath, "app-settings.json");
+    private Settings _settings = Load();
 
     public bool AlwaysOnTop
     {
         get => _settings.AlwaysOnTop;
-        set
-        {
-            if (_settings.AlwaysOnTop == value)
-            {
-                return;
-            }
-
-            _settings.AlwaysOnTop = value;
-            Save();
-        }
+        set { _settings.AlwaysOnTop = value; Save(); }
     }
 
     public bool ShowRelationships
     {
         get => _settings.ShowRelationships;
-        set
-        {
-            if (_settings.ShowRelationships == value)
-            {
-                return;
-            }
-
-            _settings.ShowRelationships = value;
-            Save();
-        }
+        set { _settings.ShowRelationships = value; Save(); }
     }
-
 
     public bool IncludeArrowNavigation
     {
         get => _settings.IncludeArrowNavigation;
-        set
-        {
-            if (_settings.IncludeArrowNavigation == value)
-            {
-                return;
-            }
-
-            _settings.IncludeArrowNavigation = value;
-            Save();
-        }
+        set { _settings.IncludeArrowNavigation = value; Save(); }
     }
 
-    public string? UiCulture
+    public bool ShowUnavailableProperties
     {
-        get => _settings.UiCulture;
-        set
-        {
-            if (string.Equals(_settings.UiCulture, value, StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            _settings.UiCulture = value;
-            Save();
-        }
+        get => _settings.ShowUnavailableProperties;
+        set { _settings.ShowUnavailableProperties = value; Save(); }
     }
 
-    private void Load()
+    private static Settings Load()
     {
         try
         {
-            if (!File.Exists(_settingsPath))
-            {
-                return;
-            }
-
-            _settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_settingsPath))
-                ?? new AppSettings();
+            return File.Exists(FilePath)
+                ? JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath)) ?? new Settings()
+                : new Settings();
         }
-        catch (IOException)
-        {
-            _settings = new AppSettings();
-        }
-        catch (JsonException)
-        {
-            _settings = new AppSettings();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            _settings = new AppSettings();
-        }
+        catch { return new Settings(); }
     }
 
     private void Save()
     {
         try
         {
-            var directory = Path.GetDirectoryName(_settingsPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            File.WriteAllText(
-                _settingsPath,
-                JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true }));
+            Directory.CreateDirectory(DirectoryPath);
+            File.WriteAllText(FilePath, JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true }));
         }
-        catch (IOException)
-        {
-            // The setting still applies for this session if persistence fails.
-        }
-        catch (UnauthorizedAccessException)
-        {
-            // The setting still applies for this session if persistence fails.
-        }
+        catch { }
     }
 
-    private sealed class AppSettings
+    public sealed class Settings
     {
+        public Settings() { }
         public bool AlwaysOnTop { get; set; }
-        public bool ShowRelationships { get; set; }
-        public bool IncludeArrowNavigation { get; set; } = true;
-        public string? UiCulture { get; set; }
+        public bool ShowRelationships { get; set; } = true;
+        public bool IncludeArrowNavigation { get; set; }
+        public bool ShowUnavailableProperties { get; set; }
     }
 }

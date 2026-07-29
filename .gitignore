@@ -3,5 +3,4 @@
 .vs/
 *.user
 *.suo
-TestResults/
-artifacts/
+*.before-relationship-visualization-update
