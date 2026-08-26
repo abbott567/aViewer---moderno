@@ -7,7 +7,7 @@ import AppKit
 /// property grid on the right, and a status line that narrates what just
 /// happened. There is no API tab strip — macOS publishes one accessibility API,
 /// so the tree is always the AX tree.
-final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
+final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegate, NSTabViewDelegate {
 
     private enum InspectionMode { case none, pointer, focus }
 
@@ -212,27 +212,53 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
         derivedCaveat.stringValue = L("DerivedAriaCaveat")
         derivedCaveat.setAccessibilityRole(.staticText)
 
-        let derivedStack = NSStackView(views: [derivedCaveat, derivedController.scrollView])
-        derivedStack.orientation = .vertical
-        derivedStack.spacing = 8
-        derivedStack.alignment = .leading
-        derivedStack.edgeInsets = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        // A plain container with the scroll view pinned on all sides. A stack
+        // view was tried here first and produced a zero-height table until the
+        // window was resized: a scroll view has no intrinsic height, so a
+        // stack laid out while its tab is hidden can give it no space at all.
+        let derivedPane = NSView()
         derivedCaveat.translatesAutoresizingMaskIntoConstraints = false
         derivedController.scrollView.translatesAutoresizingMaskIntoConstraints = false
+        derivedPane.addSubview(derivedCaveat)
+        derivedPane.addSubview(derivedController.scrollView)
+        derivedCaveat.setContentHuggingPriority(.required, for: .vertical)
+        derivedCaveat.setContentCompressionResistancePriority(.required, for: .vertical)
         NSLayoutConstraint.activate([
-            derivedCaveat.widthAnchor.constraint(equalTo: derivedStack.widthAnchor, constant: -20),
-            derivedController.scrollView.widthAnchor.constraint(
-                equalTo: derivedStack.widthAnchor, constant: -20)
+            derivedCaveat.topAnchor.constraint(equalTo: derivedPane.topAnchor, constant: 10),
+            derivedCaveat.leadingAnchor.constraint(equalTo: derivedPane.leadingAnchor, constant: 10),
+            derivedCaveat.trailingAnchor.constraint(equalTo: derivedPane.trailingAnchor, constant: -10),
+            derivedController.scrollView.topAnchor.constraint(
+                equalTo: derivedCaveat.bottomAnchor, constant: 8),
+            derivedController.scrollView.leadingAnchor.constraint(
+                equalTo: derivedPane.leadingAnchor, constant: 10),
+            derivedController.scrollView.trailingAnchor.constraint(
+                equalTo: derivedPane.trailingAnchor, constant: -10),
+            derivedController.scrollView.bottomAnchor.constraint(
+                equalTo: derivedPane.bottomAnchor, constant: -10)
         ])
 
         let derived = NSTabViewItem(identifier: "derived")
         derived.label = L("TabDerived")
-        derived.view = derivedStack
+        derived.view = derivedPane
         derivedTabItem = derived
 
         propertyTabs.addTabViewItem(published)
         propertyTabs.addTabViewItem(derived)
+        propertyTabs.delegate = self
         return propertyTabs
+    }
+
+    /// Rows laid out while a tab was hidden were measured against no width;
+    /// reload the newly visible table so its values appear without needing a
+    /// window resize.
+    func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
+        guard let tabViewItem else { return }
+        // The selected item's view is installed but not yet laid out when this
+        // fires; reloading now would measure rows against a stale width. Let
+        // the layout pass finish first.
+        let controller = tabViewItem === derivedTabItem
+            ? derivedController : propertyController
+        DispatchQueue.main.async { controller.refresh() }
     }
 
     func splitView(

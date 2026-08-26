@@ -129,10 +129,24 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
         return field
     }
 
+    /// Recomputes layout once the table actually has a size.
+    ///
+    /// A table inside a hidden tab lays its rows out against a zero width, and
+    /// nothing re-lays them out when the tab appears — the glitch shows as
+    /// blank values until the window is resized. Called when the tab is
+    /// selected.
+    func refresh() {
+        tableView.reloadData()
+    }
+
     /// Rows grow to fit the wrapped value so nothing is silently clipped.
+    /// Height is measured against the value column itself, not whichever
+    /// column happens to be last — the two layouts order their columns
+    /// differently.
     func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
         guard row < properties.count else { return 20 }
-        let width = max(80, tableView.tableColumns.last?.width ?? 320) - 8
+        let valueColumn = tableView.tableColumns.first { $0.identifier == Column.value }
+        let width = max(80, valueColumn?.width ?? 320) - 8
         let text = properties[row].value
         guard !text.isEmpty else { return 20 }
 

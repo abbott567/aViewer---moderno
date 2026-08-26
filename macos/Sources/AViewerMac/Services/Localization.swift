@@ -107,7 +107,7 @@ final class Localization {
         "TabDerived": "ARIA",
         "Source": "Source",
         "Attribute": "Attribute",
-        "TabDerivedCount": "ARIA — %d",
+        "TabDerivedCount": "ARIA (%d)",
         "DerivedAriaCaveat": "Reconstructed by aViewer. macOS publishes no single list of ARIA attributes, so each row is read back from the AX attribute named in the Source column, or from the role, subrole and value. Verified against Safari and WebKit only — treat results from other browser engines as unconfirmed. Some ARIA attributes never reach the AX layer at all and cannot appear here; see the documentation.",
         "DerivedAriaEmpty": "No ARIA attributes were found for this element. Only web content is examined, identified by the element publishing AXDOM attributes. Some ARIA attributes never reach the macOS accessibility layer and cannot be verified here; see the documentation.",
         "Section": "Section",
