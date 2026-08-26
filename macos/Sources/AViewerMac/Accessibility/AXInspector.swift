@@ -124,6 +124,13 @@ final class AXInspector {
         appendIdentityProperties(
             element, pid: pid, frame: frame, into: &properties)
 
+        appendDerivedAriaProperties(
+            element,
+            role: role,
+            subrole: subrole,
+            attributes: attributeSet,
+            into: &properties)
+
         appendActionProperties(element, into: &properties)
 
         if !attributeSet.isEmpty {
@@ -233,6 +240,51 @@ final class AXInspector {
             let description = AXValueReader.actionDescription(element, action)
             guard !description.isEmpty else { continue }
             properties.append(AccessibilityProperty("Actions", action, description))
+        }
+    }
+
+    /// Names the ARIA states that macOS has no attribute for.
+    ///
+    /// Both engines fold aria-pressed and aria-checked into the role, subrole
+    /// and value rather than publishing them by name, so an inspector that only
+    /// reports attributes leaves the reader to decode "AXSubrole AXToggle,
+    /// AXValue 1" for themselves. Naming it is the job.
+    ///
+    /// This is interpretation rather than observation, so it is reported in its
+    /// own section and always states what it was derived from. Nothing here is
+    /// ever mixed in with what the provider actually published.
+    private func appendDerivedAriaProperties(
+        _ element: AXUIElement,
+        role: String,
+        subrole: String,
+        attributes: Set<String>,
+        into properties: inout [AccessibilityProperty]
+    ) {
+        // Only web content has ARIA. A native checkbox is a checkbox, not an
+        // element with aria-checked on it, and saying otherwise would be a
+        // finding the page never earned.
+        guard attributes.contains(where: { $0.hasPrefix("AXDOM") }) else { return }
+        guard let state = triState(AXValueReader.integer(element, kAXValueAttribute))
+        else { return }
+
+        if subrole == "AXToggle" {
+            properties.append(AccessibilityProperty(
+                "ARIA (derived)", "aria-pressed",
+                "\(state) — derived from AXSubrole AXToggle and AXValue"))
+        } else if role == kAXCheckBoxRole || role == kAXRadioButtonRole {
+            properties.append(AccessibilityProperty(
+                "ARIA (derived)", "aria-checked",
+                "\(state) — derived from AXRole \(role) and AXValue"))
+        }
+    }
+
+    /// AX reports these tri-state values as 0, 1 and 2.
+    private func triState(_ value: Int?) -> String? {
+        switch value {
+        case 0: return "false"
+        case 1: return "true"
+        case 2: return "mixed"
+        default: return nil
         }
     }
 

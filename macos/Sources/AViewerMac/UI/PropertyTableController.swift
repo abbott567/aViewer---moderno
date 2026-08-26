@@ -17,8 +17,12 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
     let scrollView = NSScrollView()
 
     private var properties: [AccessibilityProperty] = []
+    private let showsSectionColumn: Bool
 
-    override init() {
+    /// - Parameter showsSectionColumn: omit the section column when every row
+    ///   in the table belongs to the same section, where it would only repeat.
+    init(showsSectionColumn: Bool = true) {
+        self.showsSectionColumn = showsSectionColumn
         super.init()
 
         let section = NSTableColumn(identifier: Column.section)
@@ -37,7 +41,7 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
         value.minWidth = 120
         value.resizingMask = .autoresizingMask
 
-        for column in [section, property, value] {
+        for column in showsSectionColumn ? [section, property, value] : [property, value] {
             tableView.addTableColumn(column)
         }
 

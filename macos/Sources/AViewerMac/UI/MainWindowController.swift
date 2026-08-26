@@ -45,6 +45,11 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
     let window: NSWindow
     private let treeController = AccessibilityTreeController()
     private let propertyController = PropertyTableController()
+    private let derivedController = PropertyTableController(showsSectionColumn: false)
+    private let propertyTabs = NSTabView()
+    private let derivedCaveat = NSTextField(wrappingLabelWithString: "")
+    private var derivedTabItem: NSTabViewItem?
+    private var propertyTabItem: NSTabViewItem?
     private let pointerButton = NSButton()
     private let focusButton = NSButton()
     private let focusOrderButton = NSButton()
@@ -140,12 +145,13 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
 
         propertyHeading.stringValue = L("Properties")
         propertyHeading.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
-        let propertyPane = NSStackView(views: [propertyHeading, propertyController.scrollView])
+
+        let propertyPane = NSStackView(views: [propertyHeading, buildPropertyTabs()])
         propertyPane.orientation = .vertical
         propertyPane.spacing = 6
         propertyPane.alignment = .leading
-        propertyController.scrollView.translatesAutoresizingMaskIntoConstraints = false
-        propertyController.scrollView.widthAnchor.constraint(
+        propertyTabs.translatesAutoresizingMaskIntoConstraints = false
+        propertyTabs.widthAnchor.constraint(
             equalTo: propertyPane.widthAnchor).isActive = true
 
         let split = NSSplitView()
@@ -186,6 +192,47 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
             statusBar.widthAnchor.constraint(equalTo: root.widthAnchor)
         ])
         window.contentView = content
+    }
+
+    /// Separates what the provider published from what aViewer inferred.
+    ///
+    /// The Windows build uses this tab strip for its three accessibility APIs.
+    /// macOS has one API, so the same affordance does a different job here:
+    /// keeping observation and interpretation apart, where mixing them would
+    /// let a derived value be mistaken for something the page actually
+    /// exposed.
+    private func buildPropertyTabs() -> NSTabView {
+        let published = NSTabViewItem(identifier: "ax")
+        published.label = L("TabPublished")
+        published.view = propertyController.scrollView
+        propertyTabItem = published
+
+        derivedCaveat.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        derivedCaveat.textColor = .secondaryLabelColor
+        derivedCaveat.stringValue = L("DerivedAriaCaveat")
+        derivedCaveat.setAccessibilityRole(.staticText)
+
+        let derivedStack = NSStackView(views: [derivedCaveat, derivedController.scrollView])
+        derivedStack.orientation = .vertical
+        derivedStack.spacing = 8
+        derivedStack.alignment = .leading
+        derivedStack.edgeInsets = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        derivedCaveat.translatesAutoresizingMaskIntoConstraints = false
+        derivedController.scrollView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            derivedCaveat.widthAnchor.constraint(equalTo: derivedStack.widthAnchor, constant: -20),
+            derivedController.scrollView.widthAnchor.constraint(
+                equalTo: derivedStack.widthAnchor, constant: -20)
+        ])
+
+        let derived = NSTabViewItem(identifier: "derived")
+        derived.label = L("TabDerived")
+        derived.view = derivedStack
+        derivedTabItem = derived
+
+        propertyTabs.addTabViewItem(published)
+        propertyTabs.addTabViewItem(derived)
+        return propertyTabs
     }
 
     func splitView(
@@ -333,6 +380,8 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
             selectedNode = nil
             treeController.show(nil)
             propertyController.show([])
+            derivedController.show([])
+            updateDerivedTabLabel(count: 0)
             focusRing.hideOverlay()
             relationshipOverlay.hideOverlay()
             status(LF("NoElementFound", source))
@@ -357,12 +406,32 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
 
     private func select(_ node: AccessibilityNode) {
         selectedNode = node
-        propertyController.show(propertyFilter.filter(node.properties))
+        showProperties(of: node)
 
         if inspectionMode != .none || activeRoot != nil {
             focusRing.show(around: node.frame)
         }
         refreshRelationshipOverlay()
+    }
+
+    /// Published attributes go to the first tab, inferred ones to the second.
+    private func showProperties(of node: AccessibilityNode) {
+        let visible = propertyFilter.filter(node.properties)
+        let derived = visible.filter { $0.group == AXAttributeCatalog.derivedAriaGroup }
+        propertyController.show(visible.filter { $0.group != AXAttributeCatalog.derivedAriaGroup })
+        derivedController.show(derived)
+        updateDerivedTabLabel(count: derived.count)
+    }
+
+    /// The count belongs in the label so an empty derived tab is obvious
+    /// without switching to it and finding nothing.
+    private func updateDerivedTabLabel(count: Int) {
+        derivedTabItem?.label = count == 0
+            ? L("TabDerived")
+            : LF("TabDerivedCount", count)
+        derivedCaveat.stringValue = count == 0
+            ? L("DerivedAriaEmpty")
+            : L("DerivedAriaCaveat")
     }
 
     private func refreshRelationshipOverlay() {
@@ -564,7 +633,7 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
             guard let self else { return }
             self.propertyFilter.apply(choices)
             if let node = self.selectedNode {
-                self.propertyController.show(self.propertyFilter.filter(node.properties))
+                self.showProperties(of: node)
             }
             self.status(LF("DisplayingProperties", self.propertyController.displayedCount))
             self.propertySelection = nil

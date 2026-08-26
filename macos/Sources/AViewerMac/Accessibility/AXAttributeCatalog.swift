@@ -11,9 +11,13 @@ import Foundation
 /// would silently hide the web-specific attributes that matter most.
 enum AXAttributeCatalog {
 
+    /// Values aViewer inferred rather than read. Kept in its own section, and
+    /// its own tab, so it can never be mistaken for a published attribute.
+    static let derivedAriaGroup = "ARIA (derived)"
+
     /// Sections, in the order they appear in the property grid.
     static let groupOrder = [
-        "AX", "ARIA", "DOM", "Value", "Text", "Table", "Table cell",
+        "AX", "ARIA", derivedAriaGroup, "DOM", "Value", "Text", "Table", "Table cell",
         "State", "Relationships", "Actions", "Parameterised", "Other"
     ]
 

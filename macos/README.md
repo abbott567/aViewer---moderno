@@ -162,6 +162,55 @@ keeps its standard meaning of copying selected text out of the property grid.
 of elements. Captures stop at 15,000 nodes and the status line says so — the
 limit is reported, never applied silently.
 
+## How ARIA states reach macOS
+
+Some ARIA states are published by name and some are not. macOS has no
+equivalent of the UI Automation `AriaProperties` string the Windows build
+reads, so the mapping is uneven and worth knowing before you trust an absence.
+
+| ARIA | macOS AX | Named by the provider |
+|---|---|---|
+| `aria-current` | `AXARIACurrent` | Yes |
+| `aria-invalid` | `AXInvalid` | Yes |
+| `aria-required` | `AXRequired` | Yes |
+| `aria-expanded` | `AXExpanded` | Yes |
+| `aria-live`, `aria-atomic`, `aria-relevant` | `AXARIALive` and friends | Yes |
+| `aria-pressed` | `AXRole` AXCheckBox + `AXSubrole` AXToggle + `AXValue` | **No** |
+| `aria-checked` | `AXRole` AXCheckBox or AXRadioButton + `AXValue` | **No** |
+| `aria-disabled` | `AXEnabled` false | **No** |
+
+For the two that carry a tri-state value, aViewer names them for you in a
+separate **ARIA (derived)** tab, which always states what each value was
+derived from:
+
+```
+aria-pressed   true — derived from AXSubrole AXToggle and AXValue
+```
+
+The Windows build uses its tab strip for the three Windows accessibility APIs.
+macOS has one API, so the same affordance does a different job here: it keeps
+observation and interpretation apart. The **AX** tab is what the application
+published. The **ARIA (derived)** tab is what aViewer worked out, and it is
+labelled as such at the top of the tab, with a count in the tab title so an
+empty one is obvious without opening it.
+
+**The derived tab is verified against Safari and WebKit only.** Chromium may
+map these states differently, and that has not been confirmed — treat derived
+values from other engines as unconfirmed and check the source. Nothing in the
+**AX** tab is affected by this: it reports what the provider published,
+whatever the engine.
+
+Derivation only runs on web content, identified by the element publishing
+`AXDOM*` attributes, so a native checkbox is never reported as though it
+carried ARIA.
+
+`aria-disabled` is deliberately not derived: it is indistinguishable from a
+natively disabled control at the AX layer, and guessing would produce findings
+the page never earned. Read `AXEnabled` and check the source.
+
+`docs/aria-state-test-page.html` exercises each of these states if you want to
+confirm the behaviour of a particular browser version yourself.
+
 ## Keyboard shortcuts
 
 | Command | Shortcut |
