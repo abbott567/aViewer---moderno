@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased — native macOS build
+
+- Added a native macOS application in [macos/](macos/), written in Swift and
+  AppKit against the `AXUIElement` accessibility API. It is a separate build,
+  not a recompile: macOS exposes a different accessibility API, so the
+  inspection layer is new while the features, interface and export formats
+  follow the Windows build.
+- Ported pointer and keyboard-focus inspection, configurable descendant depth,
+  the tree and property grid, up-one-level and complete-application-tree
+  navigation, relationship visualisation, focus-order recording with the
+  overlay, the focus ring, JSON and HTML export, property show/hide with
+  search, always on top, live-switchable localisation and configurable Help
+  menu links.
+- Replaced the fixed UIA property list with attribute discovery through
+  `AXUIElementCopyAttributeNames`. macOS attribute sets vary widely between
+  AppKit, Electron and each browser engine, so the grid reports whatever the
+  element publishes — including `AXDOMIdentifier`, `AXDOMClassList` and the
+  `AXARIA*` family — and sorts it into sections.
+- Set `AXManualAccessibility` on inspected applications so Chromium-based
+  applications expose their full tree rather than a stub.
+- Added an opt-in **Request enhanced user interface** command, off by default
+  because `AXEnhancedUserInterface` changes the layout of some AppKit
+  applications.
+- Removed the UIA / MSAA / IAccessible2 tab strip on macOS. MSAA and
+  IAccessible2 have no macOS counterpart; the tree is always the AX tree.
+- Made up-one-level exact on macOS by following `AXParent` rather than
+  re-resolving the element at the selected node's screen bounds.
+- Capped captures at 15,000 nodes and reported truncation in the status line
+  rather than truncating silently.
+- Kept JSON export key names aligned with the Windows build so captures of the
+  same page can be diffed across platforms.
+
 ## 2026.07.29.8
 
 - Restored numbered focus-order stops. Number badges are positioned outside element bounds.

@@ -1,6 +1,11 @@
 # aViewer Modern
 
-A free, open source modern Windows accessibility API inspection tool inspired by the original aViewer.
+A free, open source modern accessibility API inspection tool inspired by the original aViewer.
+
+Windows and macOS builds are maintained side by side: the Windows application
+inspects UI Automation, MSAA and IAccessible2, and the macOS application
+inspects `AXUIElement`. See [macos/README.md](macos/README.md) for the macOS
+build.
 
 [aViewer-moderno exe.zip](https://github.com/stevefaulkner/aViewer---moderno/blob/main/aViewer-moderno.zip)
 
@@ -46,9 +51,30 @@ dotnet publish .\src\AViewer.App\AViewer.App.csproj `
   -p:PublishSingleFile=true
 ```
 
+## Build on macOS
+
+The macOS application lives in [macos/](macos/) and is a separate native build
+written in Swift and AppKit against the `AXUIElement` API. It is not the Windows
+application recompiled: macOS exposes a different accessibility API, so the
+inspection layer is written for it while the features, interface and export
+formats follow the Windows build.
+
+```bash
+cd macos
+./build-app.sh
+open build/aViewer.app
+```
+
+Full setup, feature parity and the platform differences are documented in
+[macos/README.md](macos/README.md).
+
 ## Architecture
 
 `AViewer.Core` contains API adapters and neutral data models. `AViewer.App` contains only the WPF presentation layer. Additional adapters can implement `IAccessibilityInspector` without changing the UI.
+
+On macOS the equivalent split is `Sources/AViewerMac/Accessibility` and
+`Sources/AViewerMac/Services` for capture and data, and `Sources/AViewerMac/UI`,
+`Overlay` and `Input` for presentation.
 
 ## Compatibility roadmap
 

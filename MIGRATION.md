@@ -15,6 +15,26 @@
 | INI-based property selection | JSON settings and profiles | Planned |
 | Single-instance IPC | .NET named pipe | Planned |
 
+## macOS
+
+The macOS application is a separate native build rather than a port of the
+Windows presentation layer. The table above describes Windows behaviour; the
+macOS equivalents, and the places where the two platforms deliberately differ,
+are documented in [macos/README.md](macos/README.md).
+
+| Original capability | macOS replacement | Status |
+|---|---|---|
+| UI Automation property inspection | `AXUIElement` attribute discovery | Implemented |
+| Element under pointer | `AXUIElementCopyElementAtPosition` | Implemented |
+| Focused object inspection | System-wide `AXFocusedUIElement` | Implemented |
+| Accessibility hierarchy | Bounded recursive `AXChildren` walk | Implemented |
+| HTML report | JSON and HTML export | Implemented |
+| MSAA | No macOS counterpart | Not applicable |
+| IAccessible2 | No macOS counterpart | Not applicable |
+| Browser DOM / ISimpleDOM | `AXDOM*` and `AXARIA*` attributes where published | Implemented |
+| Focus rectangle window | Click-through overlay window | Implemented |
+| INI-based property selection | JSON settings and profiles | Implemented |
+
 ## Design changes
 
 - API-specific COM code is isolated behind adapters.
