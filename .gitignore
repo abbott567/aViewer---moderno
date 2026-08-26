@@ -10,3 +10,6 @@ artifacts/
 macos/.build/
 macos/build/
 .DS_Store
+
+# Editor state
+.vscode/
