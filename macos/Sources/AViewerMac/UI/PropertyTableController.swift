@@ -36,17 +36,21 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
         section.title = L("Section")
         section.width = 110
         section.minWidth = 70
+        section.resizingMask = .userResizingMask
 
         let property = NSTableColumn(identifier: Column.property)
         property.title = L("Property")
         property.width = 165
         property.minWidth = 100
+        property.resizingMask = .userResizingMask
 
         let value = NSTableColumn(identifier: Column.value)
         value.title = L("Value")
         value.width = 320
         value.minWidth = 120
-        value.resizingMask = .autoresizingMask
+        // Both masks: the column tracks the table width AND stays draggable.
+        // Autoresizing alone silently removes the user's ability to resize it.
+        value.resizingMask = [.userResizingMask, .autoresizingMask]
 
         switch layout {
         case .attributes:
@@ -54,6 +58,9 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
         case .aria:
             section.title = L("Source")
             section.width = 200
+            // Last column in this layout, so it is the one that tracks the
+            // table width.
+            section.resizingMask = [.userResizingMask, .autoresizingMask]
             property.title = L("Attribute")
             for column in [property, value, section] { tableView.addTableColumn(column) }
         }

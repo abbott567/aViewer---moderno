@@ -108,7 +108,7 @@ final class PropertySelectionWindowController: NSObject, NSTableViewDataSource, 
         let property = NSTableColumn(identifier: Column.property)
         property.title = L("Property")
         property.width = 340
-        property.resizingMask = .autoresizingMask
+        property.resizingMask = [.userResizingMask, .autoresizingMask]
 
         for column in [show, section, property] { tableView.addTableColumn(column) }
         tableView.dataSource = self
