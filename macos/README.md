@@ -33,21 +33,70 @@ should go through the bundle produced by `build-app.sh`.
 ## Accessibility permission
 
 aViewer is an assistive client. Without accessibility access it can see
-nothing, so the app asks on first launch and again from any inspection command.
-Grant it in **System Settings > Privacy & Security > Accessibility**.
+nothing — an empty tree and an empty property grid — so the app asks on first
+launch and again from any inspection command. Grant it in **System Settings >
+Privacy & Security > Accessibility**.
 
-**macOS ties that permission to the app's code signature.** The default build
-is ad-hoc signed, so every rebuild looks like a brand-new application and the
-permission has to be granted again. To avoid that during ongoing development,
-sign with a stable identity:
+Two things about this permission cause more confusion than everything else in
+the application put together.
+
+**macOS answers the trust question once per launch.** Switching the toggle on
+while aViewer is running does not reach the running process. The app polls for
+fifteen seconds and then says so, but the fix is always the same: quit aViewer
+and open it again.
+
+**The app must not be sandboxed.** The App Sandbox blocks the accessibility
+client API outright, which is why there is no entitlements file here.
+
+### Why the Accessibility permission keeps being revoked
+
+When you grant Accessibility access, macOS records the application's
+*designated requirement*, not its path. For an ad-hoc signed build — the
+default here — that requirement is a hash of the binary itself:
+
+```
+# designated => cdhash H"4157a9d9ace86f76acd57a859e62693f9f8e91e8"
+```
+
+Every rebuild produces a different hash, so the recorded requirement stops
+matching and the permission is silently dead. The toggle in System Settings
+still shows as on, which makes this look like a bug in the app or in macOS. It
+is neither, and no amount of clicking in System Settings will fix it.
+
+Signing with a real certificate changes the requirement to one based on the
+bundle identifier and the signing certificate, which does not depend on the
+binary's contents — so the grant survives rebuilds. A free, self-signed
+certificate is enough; it does not need to come from Apple.
+
+In **Keychain Access > Certificate Assistant > Create a Certificate…**:
+
+- **Name:** `aViewer Local Signing`
+- **Identity Type:** Self Signed Root
+- **Certificate Type:** Code Signing
+
+`build-app.sh` picks up an identity with exactly that name automatically, so
+after creating it just build as usual:
+
+```bash
+./build-app.sh
+```
+
+Grant Accessibility access to that build once and it will keep working across
+rebuilds. The script prints the designated requirement after signing and warns
+you when it is hash-based.
+
+If a permission does get into a stuck state, clear it and start again:
+
+```bash
+tccutil reset Accessibility org.aviewer.moderno.mac
+```
+
+Shipping the app to other people is a different problem and needs a Developer
+ID signature and notarisation:
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Org (TEAMID)" ./build-app.sh
 ```
-
-Shipping the app to other people needs a Developer ID signature and
-notarisation. The app must not be sandboxed — the App Sandbox blocks the
-accessibility client API outright.
 
 ## Feature parity
 

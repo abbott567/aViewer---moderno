@@ -16,6 +16,7 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
     private let inspectionQueue = DispatchQueue(
         label: "aviewer.inspection", qos: .userInitiated)
     private var inspectionTimer: Timer?
+    private var trustTimer: Timer?
     private var inspectionMode = InspectionMode.none
     private var inspectionBusy = false
     private var inspectionGeneration = 0
@@ -78,6 +79,7 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
 
         treeController.onSelect = { [weak self] node in self?.select(node) }
         status(AXPermissions.isTrusted ? L("Ready") : L("PermissionMissingStatus"))
+        startTrustWatch()
     }
 
     deinit {
@@ -678,7 +680,10 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
     private func requireAccessibilityAccess() -> Bool {
         if AXPermissions.isTrusted { return true }
 
-        AXPermissions.requestTrust()
+        // The system prompt is raised once at launch, which is also what
+        // registers the app in the Accessibility list. Raising it again here
+        // would stack a second dialog on top of this one.
+        startTrustWatch()
         let alert = NSAlert()
         alert.messageText = L("PermissionTitle")
         alert.informativeText = L("PermissionMessage")
@@ -697,6 +702,43 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
         return false
     }
 
+    /// Watches for the permission being granted while the app is running.
+    ///
+    /// macOS answers the trust question once per process, so an application
+    /// that checks only on demand will keep insisting it has no access long
+    /// after the user has switched the toggle on. Polling lets the window
+    /// correct itself, and say plainly when a relaunch is the only way
+    /// forward.
+    private func startTrustWatch() {
+        trustTimer?.invalidate()
+        trustTimer = nil
+        guard !AXPermissions.isTrusted else { return }
+
+        var elapsed = 0.0
+        let timer = Timer(timeInterval: 1.5, repeats: true) { [weak self] timer in
+            guard let self else { return }
+            elapsed += 1.5
+
+            if AXPermissions.isTrusted {
+                timer.invalidate()
+                self.trustTimer = nil
+                self.status(L("PermissionGrantedStatus"))
+                return
+            }
+
+            // The trust answer is cached per process. If the permission has
+            // been switched on but this process still cannot see it, no amount
+            // of waiting will help and the user needs to be told that.
+            if elapsed >= 15 {
+                timer.invalidate()
+                self.trustTimer = nil
+                self.status(L("PermissionNeedsRelaunch"))
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        trustTimer = timer
+    }
+
     private func presentAlert(_ title: String, _ message: String) {
         let alert = NSAlert()
         alert.messageText = title
@@ -713,6 +755,7 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
     func windowWillClose(_ notification: Notification) {
         inspectionGeneration += 1
         inspectionTimer?.invalidate()
+        trustTimer?.invalidate()
         keyMonitor.stop()
         focusRing.hideOverlay()
         relationshipOverlay.hideOverlay()

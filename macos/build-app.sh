@@ -39,7 +39,22 @@ sed -e "s/__SHORT_VERSION__/${SHORT_VERSION}/" \
     Resources/Info.plist > "$BUNDLE/Contents/Info.plist"
 
 echo "==> Signing"
-if [ -n "${SIGN_IDENTITY:-}" ]; then
+
+# A self-signed local certificate is enough to keep the Accessibility
+# permission across rebuilds, so pick one up automatically when it exists.
+# See "Why the Accessibility permission keeps being revoked" in README.md.
+LOCAL_IDENTITY="aViewer Local Signing"
+if [ -z "${SIGN_IDENTITY:-}" ] && \
+   security find-identity -v -p codesigning 2>/dev/null | grep -qF "$LOCAL_IDENTITY"; then
+    SIGN_IDENTITY="$LOCAL_IDENTITY"
+    echo "    found local signing identity: $LOCAL_IDENTITY"
+fi
+
+if [ "${SIGN_IDENTITY:-}" = "$LOCAL_IDENTITY" ]; then
+    # A local certificate cannot be notarised, so the hardened runtime and a
+    # timestamp would only get in the way.
+    codesign --force --sign "$SIGN_IDENTITY" "$BUNDLE"
+elif [ -n "${SIGN_IDENTITY:-}" ]; then
     codesign --force --options runtime --timestamp \
         --sign "$SIGN_IDENTITY" "$BUNDLE"
 else
@@ -50,3 +65,21 @@ fi
 
 echo "==> Built $BUNDLE"
 codesign --display --verbose=2 "$BUNDLE" 2>&1 | sed -n '1,6p'
+
+# The designated requirement is what macOS records when you grant the
+# Accessibility permission. If it is a bare cdhash the grant dies on the next
+# rebuild, so say so rather than letting it be discovered the hard way.
+REQUIREMENT="$(codesign -d --requirements - "$BUNDLE" 2>&1 | grep '^# designated' || true)"
+if [ -n "$REQUIREMENT" ]; then
+    echo "$REQUIREMENT"
+fi
+case "$REQUIREMENT" in
+    *cdhash*)
+        echo ""
+        echo "    NOTE: this build is identified by its content hash, so granting"
+        echo "    Accessibility access to it will stop working the next time you"
+        echo "    rebuild. Create a self-signed certificate named"
+        echo "    '$LOCAL_IDENTITY' to grant it once and be done."
+        echo "    See README.md > Why the Accessibility permission keeps being revoked."
+        ;;
+esac
