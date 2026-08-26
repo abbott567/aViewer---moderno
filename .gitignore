@@ -5,3 +5,8 @@
 *.suo
 TestResults/
 artifacts/
+
+# macOS build output
+macos/.build/
+macos/build/
+.DS_Store
