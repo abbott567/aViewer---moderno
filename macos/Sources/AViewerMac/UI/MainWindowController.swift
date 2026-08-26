@@ -45,7 +45,7 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
     let window: NSWindow
     private let treeController = AccessibilityTreeController()
     private let propertyController = PropertyTableController()
-    private let derivedController = PropertyTableController(showsSectionColumn: false)
+    private let derivedController = PropertyTableController(layout: .aria)
     private let propertyTabs = NSTabView()
     private let derivedCaveat = NSTextField(wrappingLabelWithString: "")
     private var derivedTabItem: NSTabViewItem?
@@ -416,11 +416,11 @@ final class MainWindowController: NSObject, NSWindowDelegate, NSSplitViewDelegat
 
     /// Published attributes go to the first tab, inferred ones to the second.
     private func showProperties(of node: AccessibilityNode) {
-        let visible = propertyFilter.filter(node.properties)
-        let derived = visible.filter { $0.group == AXAttributeCatalog.derivedAriaGroup }
-        propertyController.show(visible.filter { $0.group != AXAttributeCatalog.derivedAriaGroup })
-        derivedController.show(derived)
-        updateDerivedTabLabel(count: derived.count)
+        // The ARIA view is a curated reconstruction, so the property filter,
+        // which hides noisy raw attributes, deliberately does not apply to it.
+        propertyController.show(propertyFilter.filter(node.properties))
+        derivedController.show(node.ariaProperties)
+        updateDerivedTabLabel(count: node.ariaProperties.count)
     }
 
     /// The count belongs in the label so an empty derived tab is obvious

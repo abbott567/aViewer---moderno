@@ -162,54 +162,109 @@ keeps its standard meaning of copying selected text out of the property grid.
 of elements. Captures stop at 15,000 nodes and the status line says so — the
 limit is reported, never applied silently.
 
-## How ARIA states reach macOS
+## How ARIA reaches macOS
 
-Some ARIA states are published by name and some are not. macOS has no
-equivalent of the UI Automation `AriaProperties` string the Windows build
-reads, so the mapping is uneven and worth knowing before you trust an absence.
-
-| ARIA | macOS AX | Named by the provider |
-|---|---|---|
-| `aria-current` | `AXARIACurrent` | Yes |
-| `aria-invalid` | `AXInvalid` | Yes |
-| `aria-required` | `AXRequired` | Yes |
-| `aria-expanded` | `AXExpanded` | Yes |
-| `aria-live`, `aria-atomic`, `aria-relevant` | `AXARIALive` and friends | Yes |
-| `aria-pressed` | `AXRole` AXCheckBox + `AXSubrole` AXToggle + `AXValue` | **No** |
-| `aria-checked` | `AXRole` AXCheckBox or AXRadioButton + `AXValue` | **No** |
-| `aria-disabled` | `AXEnabled` false | **No** |
-
-For the two that carry a tri-state value, aViewer names them for you in a
-separate **ARIA (derived)** tab, which always states what each value was
-derived from:
+macOS has no equivalent of the UI Automation `AriaProperties` string the
+Windows build reads. ARIA arrives at the AX layer three different ways, and a
+grid of raw attributes shows the information without ever naming it. The
+**ARIA** tab reconstructs the ARIA view and records, for every row, the AX
+attribute it came from:
 
 ```
-aria-pressed   true — derived from AXSubrole AXToggle and AXValue
+Attribute        Value    Source
+aria-expanded    true     AXExpanded
+aria-pressed     true     AXSubrole AXToggle and AXValue
+aria-colspan     2        AXColumnIndexRange length
 ```
 
-The Windows build uses its tab strip for the three Windows accessibility APIs.
-macOS has one API, so the same affordance does a different job here: it keeps
-observation and interpretation apart. The **AX** tab is what the application
-published. The **ARIA (derived)** tab is what aViewer worked out, and it is
-labelled as such at the top of the tab, with a count in the tab title so an
-empty one is obvious without opening it.
+The Windows build uses its tab strip for three accessibility APIs. macOS has
+one, so the same affordance does a different job here: the **AX** tab is what
+the application published, and the **ARIA** tab is what that means in ARIA
+terms. Keeping them apart stops a reconstruction being mistaken for a reading.
 
-**The derived tab is verified against Safari and WebKit only.** Chromium may
-map these states differently, and that has not been confirmed — treat derived
-values from other engines as unconfirmed and check the source. Nothing in the
-**AX** tab is affected by this: it reports what the provider published,
-whatever the engine.
+**Everything below was established empirically against Safari and WebKit** with
+`docs/aria-state-test-page.html`, which exercises every attribute in the
+WAI-ARIA specification. Nothing is mapped from memory. Chromium has not been
+confirmed — treat ARIA-tab values from other engines as unverified, and use the
+test page to check a specific browser version yourself.
 
-Derivation only runs on web content, identified by the element publishing
-`AXDOM*` attributes, so a native checkbox is never reported as though it
-carried ARIA.
+### Published under a dedicated attribute
 
-`aria-disabled` is deliberately not derived: it is indistinguishable from a
-natively disabled control at the AX layer, and guessing would produce findings
-the page never earned. Read `AXEnabled` and check the source.
+`aria-atomic`, `aria-live`, `aria-relevant`, `aria-current`, `aria-posinset`,
+`aria-setsize`, `aria-colcount`, `aria-rowcount`, `aria-colindex`,
+`aria-rowindex` keep an ARIA-shaped `AXARIA*` name.
 
-`docs/aria-state-test-page.html` exercises each of these states if you want to
-confirm the behaviour of a particular browser version yourself.
+These carry a native AX name instead, which is why they do not look like ARIA
+in the AX tab: `aria-busy` (`AXElementBusy`), `aria-braillelabel`
+(`AXBrailleLabel`), `aria-brailleroledescription` (`AXBrailleRoleDescription`),
+`aria-expanded` (`AXExpanded`), `aria-haspopup` (`AXHasPopup`),
+`aria-keyshortcuts` (`AXKeyShortcutsValue`), `aria-invalid` (`AXInvalid`),
+`aria-required` (`AXRequired`), `aria-orientation` (`AXOrientation`),
+`aria-placeholder` (`AXPlaceholderValue`), `aria-sort` (`AXSortDirection`),
+`aria-valuemax` (`AXMaxValue`), `aria-valuemin` (`AXMinValue`),
+`aria-valuetext` (`AXValueDescription`), `aria-selected` (`AXSelected`),
+`aria-owns` (`AXOwns`), `aria-activedescendant` (`AXActiveElement`),
+`aria-details` (`AXDetailsElements`), `aria-errormessage`
+(`AXErrorMessageElements`).
+
+### Folded into the role, subrole or value
+
+| ARIA | Recovered from |
+|---|---|
+| `aria-pressed` | `AXSubrole` AXToggle + `AXValue` 0/1/2 |
+| `aria-checked` | `AXRole` AXCheckBox or AXRadioButton + `AXValue` 0/1/2 |
+| `aria-level` | `AXRole` AXHeading + `AXValue` |
+| `aria-modal` | `AXSubrole` AXApplicationDialog |
+| `aria-multiline` | `AXRole` AXTextArea |
+| `aria-valuenow` | `AXRole` AXSlider or AXProgressIndicator + `AXValue` |
+| `aria-colspan`, `aria-rowspan` | length of `AXColumnIndexRange` / `AXRowIndexRange` |
+
+### Reported, but ambiguous
+
+One AX attribute, more than one possible ARIA source. Both are named rather
+than one being guessed:
+
+| Shown as | From |
+|---|---|
+| `aria-label or alt` | `AXDescription` with no `AXTitleUIElement` |
+| `aria-controls or aria-flowto` | `AXLinkedUIElements` |
+| `aria-disabled or the disabled attribute` | `AXEnabled` false |
+
+`aria-labelledby` itself is not ambiguous: it additionally publishes the
+referenced element as `AXTitleUIElement`, so aViewer reports it by name. Only
+an `AXDescription` with no such reference could be `aria-label` or a non-ARIA
+name source such as alt text.
+
+### Delivered as archived custom content
+
+`aria-describedby` and `aria-description` do not appear on any ordinary
+attribute. WebKit delivers the computed description through `AXCustomContent`,
+as a keyed archive of label/value pairs rather than a string — the channel
+VoiceOver reads. aViewer decodes it and reports:
+
+```
+aria-description or aria-describedby    The description text    AXCustomContent
+```
+
+The two sources produce an identical payload, so they cannot be told apart and
+both are named. The `title` attribute is distinct: it arrives as `AXHelp`.
+
+### Cannot be determined through macOS accessibility
+
+These do not appear in the ARIA tab, and their absence there is **not**
+evidence that the attribute is absent from the page. Verify them another way.
+
+| ARIA | Why |
+|---|---|
+| `aria-autocomplete` | not observed; the role becomes `AXComboBox` |
+| `aria-multiselectable` | not observed to reach the AX layer |
+| `aria-readonly` | not observed to reach the AX layer |
+| `aria-colindextext`, `aria-rowindextext` | not observed to reach the AX layer |
+| `aria-roledescription` | `AXRoleDescription` always has a value, so an authored one cannot be told apart from the platform default |
+| `aria-hidden` | the element is removed from the accessibility tree entirely |
+
+Reconstruction runs only on web content, identified by the element publishing
+`AXDOM*` attributes, so a native control is never reported as carrying ARIA.
 
 ## Keyboard shortcuts
 

@@ -49,6 +49,10 @@ final class AccessibilityNode {
     let isEnabled: Bool
     let isFocused: Bool
     var properties: [AccessibilityProperty]
+    /// The ARIA view of this element, reconstructed by `AriaMapper`. Kept
+    /// apart from `properties` so an interpretation can never be mistaken for
+    /// something the provider published.
+    var ariaProperties: [AccessibilityProperty]
     var relationships: [AccessibilityRelationship]
     var children: [AccessibilityNode]
     weak var parent: AccessibilityNode?
@@ -67,6 +71,7 @@ final class AccessibilityNode {
         isEnabled: Bool = false,
         isFocused: Bool = false,
         properties: [AccessibilityProperty] = [],
+        ariaProperties: [AccessibilityProperty] = [],
         relationships: [AccessibilityRelationship] = [],
         children: [AccessibilityNode] = []
     ) {
@@ -83,6 +88,7 @@ final class AccessibilityNode {
         self.isEnabled = isEnabled
         self.isFocused = isFocused
         self.properties = properties
+        self.ariaProperties = ariaProperties
         self.relationships = relationships
         self.children = children
         for child in children {

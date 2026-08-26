@@ -44,6 +44,8 @@ enum AXAttributeCatalog {
     static let relationshipAttributes: [String: (type: String, source: String)] = [
         kAXTitleUIElementAttribute: (
             "Labelled by", "AXTitleUIElement / aria-labelledby"),
+        "AXActiveElement": (
+            "Active descendant", "AXActiveElement / aria-activedescendant"),
         kAXServesAsTitleForUIElementsAttribute: (
             "Label for", "AXServesAsTitleForUIElements"),
         kAXLinkedUIElementsAttribute: (

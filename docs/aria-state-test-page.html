@@ -1,12 +1,50 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>ARIA state probe</title>
+<title>WAI-ARIA attribute probe</title>
+<style>body{font:14px system-ui;margin:1rem} *{display:block;margin:2px 0}</style>
 <body>
-  <button id="p1" aria-pressed="true">Pressed true</button>
-  <button id="p2" aria-pressed="false">Pressed false</button>
-  <button id="e1" aria-expanded="true">Expanded true</button>
-  <div id="c1" role="checkbox" aria-checked="mixed" tabindex="0">Checked mixed</div>
-  <a id="cur" href="#" aria-current="page">Current page</a>
-  <button id="d1" aria-disabled="true">Disabled</button>
-  <input id="i1" aria-invalid="true" aria-required="true" value="invalid">
+<button id="control-button">Control</button>
+<div id="aria-atomic" aria-atomic="true" aria-live="polite">Atomic</div>
+<input id="aria-autocomplete" role="combobox" aria-autocomplete="list" aria-expanded="false">
+<button id="aria-braillelabel" aria-braillelabel="BL">Braille label</button>
+<div id="aria-brailleroledescription" role="button" aria-brailleroledescription="BRD" tabindex="0">BRD</div>
+<div id="aria-busy" aria-busy="true" role="region" aria-label="Busy">Busy</div>
+<div id="aria-checked" role="checkbox" aria-checked="mixed" tabindex="0">Checked</div>
+<div id="aria-colindextext" role="gridcell" aria-colindextext="Col A">Colindextext</div>
+<a id="aria-current" href="#" aria-current="page">Current</a>
+<button id="aria-description" aria-description="Described">Description</button>
+<button id="aria-disabled" aria-disabled="true">Disabled</button>
+<button id="aria-expanded" aria-expanded="true">Expanded</button>
+<button id="aria-haspopup" aria-haspopup="menu">Haspopup</button>
+<button id="aria-hidden-sibling">Hidden sibling</button><button id="aria-hidden" aria-hidden="true">Hidden</button>
+<input id="aria-invalid" aria-invalid="spelling" value="Invalid">
+<button id="aria-keyshortcuts" aria-keyshortcuts="Control+S">Keyshortcuts</button>
+<button id="aria-label" aria-label="Labelled">x</button>
+<div id="aria-level" role="heading" aria-level="4">Level</div>
+<div id="aria-live" aria-live="assertive" role="region" aria-label="Live">Live</div>
+<div id="aria-modal" role="dialog" aria-modal="true" aria-label="Modal">Modal</div>
+<div id="aria-multiline" role="textbox" aria-multiline="true" tabindex="0">Multiline</div>
+<div id="aria-multiselectable" role="listbox" aria-multiselectable="true" aria-label="Multi"><div role="option">A</div></div>
+<div id="aria-orientation" role="slider" aria-orientation="vertical" aria-valuenow="5" tabindex="0">Orientation</div>
+<div id="aria-placeholder" role="textbox" aria-placeholder="Type here" tabindex="0"></div>
+<div role="list" aria-label="Posinset list"><div id="aria-posinset" role="listitem" aria-posinset="3" aria-setsize="9">Posinset</div></div>
+<button id="aria-pressed" aria-pressed="true">Pressed</button>
+<div id="aria-readonly" role="textbox" aria-readonly="true" tabindex="0">Readonly</div>
+<div id="aria-relevant" aria-live="polite" aria-relevant="additions text" role="region" aria-label="Relevant">Relevant</div>
+<input id="aria-required" aria-required="true">
+<button id="aria-roledescription" aria-roledescription="Widget">Roledescription</button>
+<div role="listbox" aria-label="Selected list"><div id="aria-selected" role="option" aria-selected="true">Selected</div></div>
+<table><thead><tr><th id="aria-sort" aria-sort="ascending">Sort</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>
+<div id="aria-valuemax" role="slider" aria-valuemin="1" aria-valuemax="9" aria-valuenow="4" tabindex="0">Value</div>
+<div id="aria-valuetext" role="slider" aria-valuemin="1" aria-valuemax="9" aria-valuenow="4" aria-valuetext="Four of nine" tabindex="0">Valuetext</div>
+<div id="aria-activedescendant" role="listbox" aria-label="AD" aria-activedescendant="ad-opt" tabindex="0"><div id="ad-opt" role="option">Option</div></div>
+<button id="aria-controls" aria-controls="ctl-target">Controls</button><div id="ctl-target" role="region" aria-label="Target">Target</div>
+<button id="aria-describedby" aria-describedby="db-target">Describedby</button><span id="db-target">Description text</span>
+<button id="aria-details" aria-details="det-target">Details</button><div id="det-target" role="region" aria-label="Det">Detail</div>
+<input id="aria-errormessage" aria-invalid="true" aria-errormessage="err-target"><span id="err-target">Error text</span>
+<button id="aria-flowto" aria-flowto="flow-target">Flowto</button><div id="flow-target" role="region" aria-label="Flow">Flow</div>
+<button id="aria-labelledby" aria-labelledby="lb-target">x</button><span id="lb-target">Labelledby text</span>
+<div id="aria-owns" role="group" aria-label="Owner" aria-owns="own-target"></div><div id="own-target" role="button" tabindex="0">Owned</div>
+<div role="grid" aria-label="Grid" aria-colcount="7" aria-rowcount="9" id="aria-colcount">
+<div role="row" aria-rowindex="3" id="aria-rowindex"><div role="gridcell" aria-colindex="2" aria-colspan="2" aria-rowspan="2" id="aria-colindex">Cell</div></div></div>
 </body>

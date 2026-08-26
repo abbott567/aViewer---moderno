@@ -7,6 +7,15 @@ import AppKit
 /// point of the grid is to read them.
 final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
 
+    /// Which columns a table shows, in order.
+    enum Layout {
+        /// Section, property, value — the raw attribute grid.
+        case attributes
+        /// Attribute, value, source — the ARIA view, where provenance matters
+        /// more than grouping.
+        case aria
+    }
+
     private enum Column {
         static let section = NSUserInterfaceItemIdentifier("section")
         static let property = NSUserInterfaceItemIdentifier("property")
@@ -17,12 +26,10 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
     let scrollView = NSScrollView()
 
     private var properties: [AccessibilityProperty] = []
-    private let showsSectionColumn: Bool
+    private let layout: Layout
 
-    /// - Parameter showsSectionColumn: omit the section column when every row
-    ///   in the table belongs to the same section, where it would only repeat.
-    init(showsSectionColumn: Bool = true) {
-        self.showsSectionColumn = showsSectionColumn
+    init(layout: Layout = .attributes) {
+        self.layout = layout
         super.init()
 
         let section = NSTableColumn(identifier: Column.section)
@@ -41,8 +48,14 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
         value.minWidth = 120
         value.resizingMask = .autoresizingMask
 
-        for column in showsSectionColumn ? [section, property, value] : [property, value] {
-            tableView.addTableColumn(column)
+        switch layout {
+        case .attributes:
+            for column in [section, property, value] { tableView.addTableColumn(column) }
+        case .aria:
+            section.title = L("Source")
+            section.width = 200
+            property.title = L("Attribute")
+            for column in [property, value, section] { tableView.addTableColumn(column) }
         }
 
         tableView.dataSource = self
@@ -63,8 +76,10 @@ final class PropertyTableController: NSObject, NSTableViewDataSource, NSTableVie
     func applyLocalisedText() {
         for column in tableView.tableColumns {
             switch column.identifier {
-            case Column.section: column.title = L("Section")
-            case Column.property: column.title = L("Property")
+            case Column.section:
+                column.title = layout == .aria ? L("Source") : L("Section")
+            case Column.property:
+                column.title = layout == .aria ? L("Attribute") : L("Property")
             default: column.title = L("Value")
             }
         }

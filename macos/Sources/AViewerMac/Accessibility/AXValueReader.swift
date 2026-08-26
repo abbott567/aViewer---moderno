@@ -1,3 +1,4 @@
+import Accessibility
 import AppKit
 import ApplicationServices
 import Foundation
@@ -203,7 +204,28 @@ enum AXValueReader {
         if typeId == CFNullGetTypeID() {
             return ""
         }
+        if typeId == CFDataGetTypeID() {
+            return describeData(value as! CFData as Data)
+        }
         return describeOpaque(value)
+    }
+
+    /// WebKit delivers AXCustomContent as a keyed archive rather than a plain
+    /// array. It is the only channel that carries aria-describedby and
+    /// aria-description, so decoding it is not optional for a web inspector.
+    static func customContent(_ data: Data) -> [(label: String, value: String)]? {
+        guard let items = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClasses: [NSArray.self, AXCustomContent.self, NSString.self],
+            from: data) as? [AXCustomContent] else { return nil }
+        return items.map { ($0.label, $0.value) }
+    }
+
+    private static func describeData(_ data: Data) -> String {
+        if let content = customContent(data) {
+            if content.isEmpty { return "None" }
+            return content.map { "\($0.label): \($0.value)" }.joined(separator: "; ")
+        }
+        return "Data (\(data.count) bytes)"
     }
 
     /// Text markers and marker ranges are opaque handles used by the
