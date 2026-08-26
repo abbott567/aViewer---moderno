@@ -1,0 +1,17 @@
+[
+  {
+    "resourceKey": "HelpDocumentation",
+    "url": "https://github.com/stevefaulkner/aViewer---moderno"
+  },
+  {
+    "resourceKey": "HelpProjectWebsite",
+    "url": "https://github.com/stevefaulkner/aViewer---moderno"
+  },
+  {
+    "isSeparator": true
+  },
+  {
+    "resourceKey": "HelpReportIssue",
+    "url": "https://github.com/stevefaulkner/aViewer---moderno/issues"
+  }
+]
